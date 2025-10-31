@@ -1,37 +1,29 @@
 # Environment files with secrets
 .env
 .env.local
-.env.production
+.env.*.local
 
-# Data directories
-data/
-logs/
-backups/
+# SSL certificates
+certs/
 
-# Temporary files
-*.tmp
-*.log
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# IDE files
+# IDE
 .vscode/
 .idea/
-*.code-workspace
+*.swp
+*.swo
+*~
 
 # Docker overrides
 docker-compose.override.yml
 
-# Backup files
-*.backup
-*.sql.gz
-*.enc
+# Logs
+*.log
 
-# Node modules (if any)
-node_modules/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# System files
-Thumbs.db
+# Temporary files
+*.tmp
+.cache/

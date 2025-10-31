@@ -1,393 +1,538 @@
-# 🤖 AI Stack - Complete AI Automation Environment
+# AI Stack - Private AI Infrastructure
 
-A production-ready AI automation stack for Mac Mini M4, featuring n8n workflows, Ollama local AI models, Open WebUI chat interface, and advanced AI integrations through MCP (Model Context Protocol).
+Complete home lab AI environment featuring local AI models, workflow automation, chat interface, and AI integrations. Everything runs privately on your infrastructure with zero cloud dependencies.
 
-## 🎯 What You Get
+## Services Included
 
-**Complete AI Environment**: Local AI models, workflow automation, chat interface, and AI-powered integrations - all running privately on your Mac Mini M4.
+- **PostgreSQL** with pgvector - Vector database for AI embeddings
+- **Ollama** - Local AI model server (llama3.2:3b, qwen2.5:7b-instruct, nomic-embed-text)
+- **Open WebUI** - ChatGPT-like web interface with filesystem access
+- **n8n** - Workflow automation platform
+- **LiteLLM** - Unified AI proxy for multiple providers
+- **SearXNG** - Privacy-respecting web search engine for RAG
+- **MCP Services** - Model Context Protocol integration (n8n-mcp, mcpo)
+- **Traefik** - Reverse proxy with automatic HTTPS
+- **Redis** - High-performance caching layer
 
-**Zero Cloud Dependencies**: Everything runs locally - your data stays private and secure.
+## Quick Start
 
-**Beginner-Friendly**: Simple setup scripts and clear documentation designed for users new to Docker and AI.
+### Prerequisites
 
-## 🏗️ System Architecture
+- Docker Desktop installed and running
+- 16GB+ RAM recommended
+- 50GB+ free disk space
+- macOS, Linux, or Windows with WSL2
 
-```
-┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
-│   Open WebUI    │  │       n8n       │  │    LiteLLM      │
-│ (Chat Interface)│  │ (Workflows)     │  │  (AI Proxy)     │
-│   Port: 8080    │  │   Port: 5678    │  │   Port: 4000    │
-└─────────┬───────┘  └─────────┬───────┘  └─────────┬───────┘
-          │                    │                    │
-          └──────────┬─────────┴──────┬─────────────┘
-                     │                │
-          ┌─────────────────┐  ┌─────────────────┐
-          │     Ollama      │  │   PostgreSQL    │
-          │ (Local AI)      │  │ (Database +     │
-          │  Port: 11434    │  │  Vectors)       │
-          └─────────────────┘  └─────────────────┘
-                     │                │
-          ┌─────────────────┐  ┌─────────────────┐
-          │   MCP Servers   │  │      Redis      │
-          │ (AI Protocol)   │  │    (Cache)      │
-          └─────────────────┘  └─────────────────┘
-```
+### Installation
 
-## 🚀 Quick Start (Complete Beginner)
-
-### Step 1: Install Docker Desktop
-1. Download [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
-2. Install and start Docker Desktop
-3. In Docker Desktop settings, allocate at least 12GB RAM and 8 CPU cores
-
-### Step 2: Download AI Stack
+**1. Clone or download this repository**
 ```bash
-# Create project directory
-mkdir -p ~/ai-stack
-cd ~/ai-stack
-
-# Download project files (copy all files from this repository)
+cd ~/
+git clone <repository-url> ai-stack
+cd ai-stack
 ```
 
-### Step 3: Run Setup
+**2. Run setup**
 ```bash
-# Make setup script executable and run it
-chmod +x scripts/setup.sh
-./scripts/setup.sh
+./setup.sh
 ```
 
 The setup script will:
-- ✅ Check your system is ready
-- ✅ Help you create secure passwords
-- ✅ Download all required software
-- ✅ Download AI models (~4GB)
-- ✅ Configure everything automatically
+- Verify Docker is running
+- Create `.env` from template
+- Prompt you to configure environment variables
+- Download all Docker images
+- Generate self-signed SSL certificates
 
-### Step 4: Start Your AI Stack
+**3. Configure `/etc/hosts`**
+
+Add these entries to access services via friendly names:
 ```bash
-./scripts/start.sh
+sudo nano /etc/hosts
 ```
 
-### Step 5: Start Using AI
-- **Chat with AI**: Visit http://localhost:8080
-- **Create Workflows**: Visit http://localhost:5678  
-- **API Access**: Visit http://localhost:4000
+Add this line:
+```
+127.0.0.1 open-webui.local n8n.local litellm.local traefik.local ollama.local mcpo.local searxng.local
+```
 
-## 🎮 What Can You Do?
-
-### 💬 Chat with Local AI Models
-- **Open WebUI** provides a ChatGPT-like interface
-- Multiple AI models available (Llama 3.2 1B, 3B)
-- Upload documents for AI analysis
-- Generate images (configurable)
-- Everything runs locally - complete privacy
-
-### 🔄 Create AI Workflows
-- **n8n** provides visual workflow automation
-- Connect AI to your apps and services
-- Automate repetitive tasks with AI
-- Schedule AI-powered workflows
-- No coding required - drag and drop interface
-
-### 🔌 Advanced AI Integration
-- **MCP Protocol** for advanced AI communication
-- **LiteLLM** provides unified API for multiple AI services
-- Connect external AI services when needed
-- Custom AI tool integration
-
-### 🛡️ Enterprise-Grade Security
-- All data encrypted at rest
-- Automatic backups
-- No data leaves your device
-- Industry-standard security practices
-
-## 📋 Requirements
-
-### Hardware (Mac Mini M4)
-- **Minimum**: 16GB RAM, 256GB storage
-- **Recommended**: 32GB+ RAM, 512GB+ storage
-- **Network**: Broadband internet for initial setup
-
-### Software
-- **macOS**: 14.0+ (Sonoma or later)
-- **Docker Desktop**: 4.25+ (automatically installed)
-
-## 🎛️ Configuration Options
-
-### Memory Settings (16GB Mac Mini)
+**4. Start the stack**
 ```bash
-# In .env file - optimized for 16GB RAM
-POSTGRES_MEMORY_LIMIT=2G
-N8N_MEMORY_LIMIT=4G
+docker compose up -d
+```
+
+**5. Download AI models (runs in background)**
+```bash
+docker exec ollama sh /configs/ollama/init-models.sh
+```
+
+This downloads ~7GB of models and takes 10-20 minutes depending on your connection.
+
+## Service Access
+
+Once running, access services at:
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Open WebUI** | https://open-webui.local | AI chat interface (primary) |
+| **n8n** | https://n8n.local | Workflow automation |
+| **LiteLLM** | https://litellm.local | AI proxy management |
+| **SearXNG** | https://searxng.local | Web search engine |
+| **Traefik** | https://traefik.local | Reverse proxy dashboard |
+| **Ollama** | https://ollama.local | AI model API |
+| **MCPO** | https://mcpo.local | MCP orchestrator |
+
+**First-time setup:**
+- Open WebUI: First user becomes admin
+- n8n: First user becomes owner
+- Accept self-signed certificate warnings in browser
+
+## Configuration
+
+### Environment Variables
+
+All configuration is in `.env` file. Key variables:
+
+**Database:**
+```bash
+POSTGRES_USER=aistack
+POSTGRES_PASSWORD=<secure-password>
+POSTGRES_DB=aistack_db
+```
+
+**Security Keys** (generate with `openssl rand -hex 16`):
+```bash
+N8N_ENCRYPTION_KEY=<32-char-hex>
+OPEN_WEBUI_SECRET_KEY=<32-char-hex>
+LITELLM_MASTER_KEY=<secure-key>
+```
+
+**Host Filesystem Mounts** (Open WebUI access):
+```bash
+HOST_DOWNLOADS_PATH=/Users/YOUR_USERNAME/Downloads
+HOST_VIRIDAE_PATH=/Users/YOUR_USERNAME/Viridae Network
+HOST_DROPZONE_PATH=/Users/YOUR_USERNAME/Library/Mobile Documents/com~apple~CloudDocs/DropZone
+HOST_DOCSTORE_PATH=/Users/YOUR_USERNAME/Library/Mobile Documents/com~apple~CloudDocs/DocStore
+```
+
+Update `YOUR_USERNAME` with your actual username.
+
+### Resource Limits
+
+Adjust resource limits in `.env` based on your system:
+
+**For systems with 16-32GB RAM:**
+```bash
 OLLAMA_MEMORY_LIMIT=8G
-OLLAMA_MAX_MODELS=1
-DEFAULT_MODELS=llama3.2:1b
-```
-
-### Memory Settings (32GB+ Mac Mini)
-```bash
-# In .env file - optimized for 32GB+ RAM
-POSTGRES_MEMORY_LIMIT=4G
-N8N_MEMORY_LIMIT=6G
-OLLAMA_MEMORY_LIMIT=16G
 OLLAMA_MAX_MODELS=2
-DEFAULT_MODELS=llama3.2:3b,llama3.2:1b
+N8N_MEMORY_LIMIT=2G
+POSTGRES_MEMORY_LIMIT=2G
 ```
 
-### Security Settings
-All passwords and keys are generated during setup:
-- Database passwords
-- API keys
-- Encryption keys
-- Backup encryption
+**For systems with 32GB+ RAM:**
+```bash
+OLLAMA_MEMORY_LIMIT=12G
+OLLAMA_MAX_MODELS=3
+N8N_MEMORY_LIMIT=3G
+POSTGRES_MEMORY_LIMIT=4G
+```
 
-## 🔧 Daily Operations
+## Daily Operations
 
 ### Starting and Stopping
+
 ```bash
-# Start everything
-./scripts/start.sh
+# Start all services
+docker compose up -d
 
-# Stop everything
-./scripts/stop.sh
+# Stop all services
+docker compose stop
 
-# Stop and remove all data (CAREFUL!)
-./scripts/stop.sh --volumes
+# Stop and remove containers (data persists)
+docker compose down
+
+# Stop and remove all data (DESTRUCTIVE)
+docker compose down -v
 ```
 
-### Backup and Restore
+### Viewing Logs
+
 ```bash
-# Backup all data
-./scripts/backup.sh
+# All services
+docker compose logs -f
 
-# Backup specific service
-./scripts/backup.sh --service postgres
+# Specific service
+docker compose logs -f open-webui
+docker compose logs -f ollama
+docker compose logs -f postgresql
 
-# Restore from backup
-./scripts/restore.sh
-
-# List available backups
-./scripts/restore.sh --list
+# Last 100 lines
+docker compose logs --tail=100
 ```
 
-### Monitoring
+### Checking Service Status
+
 ```bash
-# View service status
+# Service health
 docker compose ps
 
-# View resource usage
+# Resource usage
 docker stats
 
-# View logs for specific service
-docker compose logs -f [service_name]
-
-# View all logs
-docker compose logs -f
-```
-
-## 📊 Service Details
-
-### 🤖 Ollama (AI Models)
-- **What**: Local AI model server
-- **Models**: Llama 3.2 (1B, 3B), Nomic Embed Text
-- **Memory**: 8-16GB (configurable)
-- **Access**: http://localhost:11434
-
-### 🔄 n8n (Workflow Automation)
-- **What**: Visual workflow automation platform
-- **Database**: PostgreSQL with full persistence
-- **Memory**: 3-6GB
-- **Access**: http://localhost:5678
-
-### 🌐 Open WebUI (Chat Interface)
-- **What**: ChatGPT-like web interface
-- **Features**: Document upload, RAG, image generation
-- **Memory**: 1GB
-- **Access**: http://localhost:8080
-
-### 🎯 LiteLLM (AI Proxy)
-- **What**: Unified API for multiple AI providers
-- **Features**: Load balancing, rate limiting, cost tracking
-- **Memory**: 1GB
-- **Access**: http://localhost:4000
-
-### 🐘 PostgreSQL (Database)
-- **What**: Main database with AI extensions
-- **Extensions**: pgvector (embeddings), AI functions
-- **Memory**: 2-4GB
-- **Databases**: Main, n8n, LiteLLM, Open WebUI
-
-### 🔴 Redis (Cache)
-- **What**: High-speed cache for AI operations
-- **Memory**: 512MB
-- **Persistence**: Automatic saves
-
-### 🔗 MCP Servers (AI Protocol)
-- **What**: Model Context Protocol for advanced AI communication
-- **Features**: Secure AI-to-app communication
-- **Memory**: 512MB total
-
-## 🆘 Troubleshooting
-
-### Services Won't Start
-```bash
-# Check Docker is running
-docker info
-
-# Check logs for errors
-docker compose logs [service_name]
-
-# Reset everything
-./scripts/stop.sh --force
-docker system prune -f
-./scripts/start.sh
-```
-
-### Out of Memory
-```bash
-# Check current usage
-docker stats
-
-# Reduce memory in .env file:
-OLLAMA_MAX_MODELS=1
-DEFAULT_MODELS=llama3.2:1b
-
-# Restart
-./scripts/stop.sh && ./scripts/start.sh
-```
-
-### Database Issues
-```bash
-# Check PostgreSQL logs
-docker compose logs postgres
-
-# Reset database (LOSES DATA!)
-docker volume rm ai-stack_postgres_data
-./scripts/start.sh
-```
-
-### AI Models Not Working
-```bash
-# Download models manually
-docker exec ollama ollama pull llama3.2:1b
-docker exec ollama ollama pull llama3.2:3b
-
-# Check available models
+# Verify models downloaded
 docker exec ollama ollama list
 ```
 
-### Backup/Restore Problems
+### Restarting a Service
+
 ```bash
-# Check backup directory
-ls -la ~/Documents/ai-stack-backups/
+# Restart specific service
+docker compose restart open-webui
 
-# Test backup
-./scripts/backup.sh --service postgres
-
-# Verify backups
-./scripts/restore.sh --list
+# Restart after config changes
+docker compose up -d --force-recreate open-webui
 ```
 
-## 🔒 Security & Privacy
+## Open WebUI Features
 
-### Data Protection
-- **Local Processing**: All AI processing happens on your device
-- **Encrypted Backups**: AES-256 encryption for all backups
-- **Network Isolation**: Services isolated in secure Docker networks
-- **No Telemetry**: No data collection or external communication
+### Filesystem Access
 
-### Access Control
-- **Authentication Required**: All services require login
-- **Secure Passwords**: Strong password generation during setup
-- **API Key Protection**: All APIs secured with keys
-- **Admin Controls**: First user becomes admin
+Open WebUI has read-write access to your mounted directories. Files appear at:
+- `/mnt/host/downloads` - Your Downloads folder
+- `/mnt/host/viridae-network` - Viridae Network folder
+- `/mnt/host/dropzone` - iCloud DropZone
+- `/mnt/host/docstore` - iCloud DocStore
 
-### Backup Security
-- **Automatic Encryption**: All backups encrypted by default
-- **Local Storage**: Backups stored locally on your device
-- **Retention Policies**: Automatic cleanup of old backups
-- **Easy Restore**: Simple restore process with verification
+Use these paths when referencing files in conversations.
 
-## 📈 Performance Guidelines
+### Custom Branding
 
-### For 16GB Mac Mini M4
-- **Concurrent Users**: 1-2
-- **Model Size**: Use 1B model for best performance
-- **Workflows**: Light to medium complexity
-- **Expected Response Time**: 2-5 seconds
+Place your logo files in `configs/open-webui/`:
+- `favicon.png` (32x32px)
+- `logo.png` (512x512px)
+- `logo-dark.png` (512x512px, optional)
 
-### For 32GB+ Mac Mini M4
-- **Concurrent Users**: 2-5
-- **Model Size**: Use 3B model for better quality
-- **Workflows**: Complex workflows supported
-- **Expected Response Time**: 1-3 seconds
+See [configs/open-webui/BRANDING.md](configs/open-webui/BRANDING.md) for details.
 
-### Optimization Tips
-- **Use smaller models** for faster responses
-- **Close other applications** when using AI heavily
-- **Regular backups** prevent data loss
-- **Monitor disk space** - AI models need storage
+### AI Models
 
-## 🎓 Learning Resources
+Ollama provides these models:
+- **llama3.2:3b** - Fast, balanced model for general use
+- **qwen2.5:7b-instruct** - Larger model for complex tasks
+- **nomic-embed-text** - For document embeddings and RAG
 
-### Getting Started with n8n
-1. Create your first workflow
-2. Connect AI nodes to your workflow
-3. Use webhooks for external integration
-4. Schedule automated AI tasks
+Switch models in Open WebUI interface. Models load on first use.
 
-### Using Open WebUI Effectively
-1. Chat with different models to find your preference
-2. Upload documents for AI analysis
-3. Use system prompts for consistent behavior
-4. Organize conversations with folders
+## n8n Workflow Automation
 
-### API Integration
-1. Use LiteLLM for unified AI API access
-2. Integrate with external applications
-3. Monitor usage and costs
-4. Set up rate limiting for safety
+### Filesystem Access
 
-## 📞 Support
+n8n has access to:
+- `/home/node/dropzone` - iCloud DropZone
+- `/home/node/docstore` - iCloud DocStore
 
-### Self-Help
-1. **Check logs**: `docker compose logs [service]`
-2. **Review documentation**: Read this README
-3. **Restart services**: `./scripts/stop.sh && ./scripts/start.sh`
-4. **Check resources**: `docker stats`
+Use these paths in File nodes for reading/writing files.
 
-### Common Commands
+### Database Connection
+
+n8n uses PostgreSQL database `n8n_db`. All workflows persist automatically.
+
+### API Access
+
+n8n API available at `https://n8n.local/api/v1/`
+
+API key configured via `N8N_API_KEY` in `.env`
+
+## SearXNG Web Search
+
+### Privacy-Respecting Search
+
+SearXNG enables Open WebUI to search the internet and use real-time web data in AI responses.
+
+**Privacy Features**:
+- Self-hosted - runs entirely on your infrastructure
+- No tracking cookies
+- Anonymizes requests to search engines
+- No search history logging
+
+### How It Works
+
+```
+Your Question → Open WebUI → SearXNG → [Google, Bing, DuckDuckGo, etc.]
+                                 ↓
+                         Aggregated Results
+                                 ↓
+                   Ollama AI + Web Context → Response
+```
+
+### Usage in Open WebUI
+
+**Enable web search** in Open WebUI interface when asking questions that require current information:
+- "What's the weather in Paris today?"
+- "What are the latest developments in AI?"
+- "Search for recent Docker best practices"
+
+**Configuration**:
+All settings in `.env`:
 ```bash
-# Complete reset (nuclear option)
-./scripts/stop.sh --volumes
-docker system prune -a -f
-./scripts/setup.sh
+ENABLE_RAG_WEB_SEARCH=true
+RAG_WEB_SEARCH_ENGINE=searxng
+RAG_WEB_SEARCH_RESULT_COUNT=5
+```
 
-# Health check
-docker compose ps
-curl http://localhost:8080/health
-curl http://localhost:5678/healthz
+### Accessing SearXNG Directly
 
-# Resource monitoring
+Navigate to https://searxng.local to:
+- Perform manual searches
+- Configure enabled search engines
+- Adjust preferences
+
+See [configs/searxng/README.md](configs/searxng/README.md) for advanced configuration.
+
+## Troubleshooting
+
+### Services Won't Start
+
+**Check Docker:**
+```bash
+docker info
+```
+
+**Check logs:**
+```bash
+docker compose logs [service-name]
+```
+
+**Reset everything:**
+```bash
+docker compose down
+docker system prune -f
+docker compose up -d
+```
+
+### Can't Access Services
+
+**Verify `/etc/hosts`:**
+```bash
+cat /etc/hosts | grep local
+```
+
+**Check Traefik is running:**
+```bash
+docker compose ps traefik
+```
+
+**Test direct access (bypass Traefik):**
+```bash
+curl http://localhost:8080  # Open WebUI direct
+curl http://localhost:5678  # n8n direct
+```
+
+### Database Connection Errors
+
+**Check PostgreSQL:**
+```bash
+docker compose logs postgresql
+docker compose exec postgresql pg_isready
+```
+
+**Verify pgvector extension:**
+```bash
+docker compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT * FROM pg_extension WHERE extname='vector';"
+```
+
+### Ollama Models Not Working
+
+**Check model download:**
+```bash
+docker exec ollama ollama list
+```
+
+**Download manually if missing:**
+```bash
+docker exec ollama ollama pull llama3.2:3b
+docker exec ollama ollama pull qwen2.5:7b-instruct
+docker exec ollama ollama pull nomic-embed-text
+```
+
+**Check Ollama logs:**
+```bash
+docker compose logs -f ollama
+```
+
+### Out of Memory
+
+**Check resource usage:**
+```bash
 docker stats --no-stream
-df -h
 ```
 
-## 🎉 Success!
+**Reduce model memory in `.env`:**
+```bash
+OLLAMA_MEMORY_LIMIT=8G
+OLLAMA_MAX_MODELS=2
+```
 
-Once everything is running, you have:
+**Unload unused models:**
+```bash
+docker exec ollama ollama stop llama3.2:3b
+```
 
-✅ **Private AI chat interface** - like ChatGPT but local  
-✅ **Workflow automation** - automate tasks with AI  
-✅ **Document analysis** - upload and analyze files with AI  
-✅ **API access** - integrate AI into your applications  
-✅ **Secure backups** - automatic data protection  
-✅ **Zero cloud dependencies** - everything runs locally  
+### Filesystem Mount Permission Errors
 
-**Your personal AI environment is ready!** 
+**Verify paths exist:**
+```bash
+ls -la "$HOME/Downloads"
+ls -la "$HOME/Viridae Network"
+```
 
-Start by visiting http://localhost:8080 to chat with your AI, or http://localhost:5678 to create your first automated workflow.
+**Check container can access:**
+```bash
+docker compose exec open-webui ls -la /mnt/host/
+```
+
+**Update `.env` with correct username:**
+```bash
+HOST_DOWNLOADS_PATH=/Users/YOUR_ACTUAL_USERNAME/Downloads
+```
+
+Then restart:
+```bash
+docker compose up -d --force-recreate open-webui
+```
+
+## Security Considerations
+
+### Network Access
+
+- All services behind Traefik reverse proxy
+- Self-signed SSL certificates for local HTTPS
+- Services communicate via internal Docker network
+- Only Traefik exposes ports to host (80, 443, 8090)
+
+### Credentials
+
+- All passwords in `.env` file (git-ignored)
+- Use strong, unique passwords
+- Rotate API keys periodically
+- Never commit `.env` to version control
+
+### For Remote Access
+
+**Not currently configured**. To enable:
+
+1. Configure Let's Encrypt in Traefik
+2. Set up port forwarding on router (80, 443)
+3. Use dynamic DNS for your public IP
+4. Update Traefik to use Let's Encrypt resolver
+5. Consider adding authentication middleware
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
+
+## Updating
+
+### Update Docker Images
+
+```bash
+# Pull latest images
+docker compose pull
+
+# Recreate containers
+docker compose up -d --force-recreate
+
+# Clean old images
+docker image prune -f
+```
+
+### Update AI Models
+
+```bash
+# Check for model updates
+docker exec ollama ollama pull llama3.2:3b
+docker exec ollama ollama pull qwen2.5:7b-instruct
+```
+
+### Update Configuration
+
+1. Edit `.env` with new values
+2. Restart affected services:
+```bash
+docker compose up -d --force-recreate [service-name]
+```
+
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for:
+- Design decisions and rationale
+- Network architecture
+- Database schema
+- Service dependencies
+- Future extensibility
+
+## Performance Tips
+
+- Close unused applications while running AI workloads
+- Use smaller models (llama3.2:3b) for faster responses
+- Limit concurrent model usage with `OLLAMA_MAX_MODELS`
+- Monitor disk space - models and data can grow large
+- Restart Ollama periodically to free memory
+
+## Adding Monitoring
+
+Stack is designed to easily add monitoring tools:
+
+**Prometheus + Grafana:**
+```yaml
+# Add to docker-compose.yml
+prometheus:
+  image: prom/prometheus
+  # ... configuration
+
+grafana:
+  image: grafana/grafana
+  # ... configuration
+```
+
+**Portainer:**
+```yaml
+portainer:
+  image: portainer/portainer-ce
+  ports:
+    - "9443:9443"
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - portainer_data:/data
+```
+
+All services already expose metrics endpoints for Prometheus scraping.
+
+## Support
+
+**Check logs first:**
+```bash
+docker compose logs -f [service-name]
+```
+
+**Verify configuration:**
+```bash
+docker compose config
+```
+
+**Health check:**
+```bash
+docker compose ps
+curl -k https://open-webui.local/health
+curl -k https://n8n.local/healthz
+```
+
+**Complete reset (nuclear option):**
+```bash
+docker compose down -v
+rm -rf certs/
+./setup.sh
+docker compose up -d
+```
 
 ---
 
-*This AI Stack is optimized for Mac Mini M4 and designed for users who want powerful AI capabilities without the complexity. Everything runs locally for maximum privacy and control.*
+**Your private AI infrastructure is ready.** Start by accessing https://open-webui.local and creating your admin account.
