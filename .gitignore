@@ -27,3 +27,11 @@ docker-compose.override.yml
 # Temporary files
 *.tmp
 .cache/
+
+# Workspace/editor files
+.DS_Store
+*.code-workspace
+.vscode/
+.idea/
+.claude/
+.clauderc
