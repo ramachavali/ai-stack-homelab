@@ -11,7 +11,15 @@ set -o nounset
 set -x
 
 # Project root directory
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ "${BASH_SOURCE-}" ]; then
+    SCRIPT_PATH="${BASH_SOURCE[0]}"
+else
+    SCRIPT_PATH="$0"
+fi
+PROJECT_ROOT="$(cd "$(dirname "$SCRIPT_PATH")/.." && pwd)" || {
+    echo "Failed to determine project root directory" >&2
+    exit 1
+}
 cd "$PROJECT_ROOT"
 
 echo -e "🚀 AI Stack Setup for Mac Mini M4"
@@ -28,20 +36,17 @@ print_section() {
 check_prerequisites() {
     print_section "📋 Checking Prerequisites"
     
-    # Check if Docker is running
-    if ! docker info > /dev/null 2>&1; then
-        echo -e "❌ Docker is not running"
-        echo ""
-        echo "Please:"
-        echo "1. Open Docker Desktop application"
-        echo "2. Wait for it to start completely"
-        echo "3. Run this script again"
+    # Check colima (for Docker on Apple Silicon)
+    if ! colima status > /dev/null 2>&1; then
+        echo -e "❌ Colima not available"
+        echo "Please install Colima for Docker on Apple Silicon"
         exit 1
     fi
-    echo -e "✅ Docker is running"
+    echo -e "✅ Colima is available"
+
 
     # Check Docker Compose version
-    if ! docker compose version > /dev/null 2>&1; then
+    if ! docker-compose version > /dev/null 2>&1; then
         echo -e "❌ Docker Compose not available"
         echo "Please update Docker Desktop to the latest version"
         exit 1
@@ -189,7 +194,7 @@ pull_images() {
     echo "This may take several minutes depending on your internet connection..."
     echo ""
     
-    if docker compose pull; then
+    if docker-compose pull; then
         echo -e "✅ All Docker images downloaded successfully"
     else
         echo -e "❌ Failed to download some Docker images"
@@ -208,7 +213,7 @@ setup_models() {
     
     # Start only Ollama for model download
     echo "Starting Ollama temporarily..."
-    docker compose up -d ollama
+    docker-compose up -d ollama
     
     # Wait for Ollama to be ready
     echo "Waiting for Ollama to start..."
@@ -223,7 +228,7 @@ setup_models() {
     fi
     
     # Stop Ollama
-    docker compose stop ollama
+    docker-compose stop ollama
     echo -e "✅ AI models setup completed"
     echo ""
 }
@@ -268,7 +273,7 @@ show_completion() {
     echo "• Start all services:     ./scripts/start.sh"
     echo "• Stop all services:      ./scripts/stop.sh"
     echo "• Backup data:            ./scripts/backup.sh"
-    echo "• View logs:              docker compose logs -f [service]"
+    echo "• View logs:              docker-compose logs -f [service]"
     echo ""
     echo -e "💾 Remember to backup your .env file securely!"
     echo ""
