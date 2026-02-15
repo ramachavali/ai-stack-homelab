@@ -107,9 +107,13 @@ echo -e "🐘 Cleaning up environment files..."
 safe_remove "./.env" "remove .env file"
 safe_remove "./.rendered.env" "remove .env file"
 
-echo -e "🐘 Cleaning up docker files..."
+echo -e "🐘 Cleaning up docker volumes..."
 docker volume rm $(docker volume ls |awk '{print $2}') 2>/dev/null || true
+
+echo -e "🐘 Cleaning up docker images..."
 docker rmi $(docker images -a -q) 2>/dev/null || true
+
+echo -e "🐘 Cleaning up docker prune..."
 docker system prune -a -f 2>/dev/null || true
 
 # 8. Optional: Remove VS Code workspace file
