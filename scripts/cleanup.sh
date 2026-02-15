@@ -53,8 +53,8 @@ echo ""
 
 # Function to safely remove file/directory
 safe_remove() {
-    local path="$1"
-    local description="$2"
+    local path="${1}"
+    local description="${2}"
     
     if [ -e "$path" ]; then
         echo -e "  ⚠️  Removing: $description"
