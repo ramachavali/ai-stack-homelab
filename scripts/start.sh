@@ -8,7 +8,7 @@
 set -o errexit
 set -o nounset
 
-set -x
+#set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -73,16 +73,12 @@ fi
 print_success "Docker is running"
 
 # Check if current_run.env file exists
-if [ ! -f current_run.env ]; then
-    print_error "current_run.env file not found"
-    echo ""
-    echo "Please run ./scripts/setup.sh first"
+if [ -f ./.rendered.env ]; then
+    source ./.rendered.env
+else
+    echo -e "❌ current_run.env file not found"
     exit 1
 fi
-print_success ".env file found"
-
-# Load environment variables
-source current_run.env
 
 # Validate critical environment variables
 print_step "🔍 Validating Configuration"

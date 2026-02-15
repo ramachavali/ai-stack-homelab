@@ -8,7 +8,7 @@
 set -o errexit
 set -o nounset
 
-set -x
+#set -x
 
 # Project root directory
 if [ "${BASH_SOURCE-}" ]; then

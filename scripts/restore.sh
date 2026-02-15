@@ -8,15 +8,15 @@
 set -o errexit
 set -o nounset
 
-set -x
+#set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Load environment variables
-if [ -f current_run.env ]; then
-    source current_run.env
+if [ -f ./.rendered.env ]; then
+    source ./.rendered.env
 else
     echo -e "❌ current_run.env file not found"
     exit 1
