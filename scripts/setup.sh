@@ -115,9 +115,6 @@ setup_environment() {
             echo -e "✗ Failed to load .env file"
             exit 1
         }
-    else
-        echo -e "✓ .env file exists and validated"
-    fi
 
     env
     env >> "${PROJECT_ROOT}/current_run.env"
