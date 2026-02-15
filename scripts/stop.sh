@@ -75,7 +75,7 @@ else
     docker-compose stop mcpo n8n-mcp
     
     echo -e "🌐 Stopping Open WebUI..."
-docker-compose stop open-webui
+    docker-compose stop open-webui
     
     echo -e "🎯 Stopping LiteLLM..."
     docker-compose stop litellm
@@ -90,7 +90,10 @@ docker-compose stop open-webui
     docker-compose stop redis
     
     echo -e "🐘 Stopping PostgreSQL..."
-    docker-compose stop postgres
+    docker-compose stop postgresql
+
+    echo -e "🌐 Stopping Traefik..."
+    docker-compose stop traefik
 fi
 
 echo -e "🧹 Removing containers..."

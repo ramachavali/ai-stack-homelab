@@ -153,11 +153,16 @@ print_step "  🔗 Starting MCP servers..."
 docker-compose up -d n8n-mcp mcpo
 sleep 15  # Give MCP servers time to initialize
 
+# 7. Start Traefik servers
+print_step "  🔗 Starting Traefik servers..."
+docker-compose up -d traefik
+sleep 15  # Give Traefik servers time to initialize
+
 # Final health check
 print_step "🏥 Final Health Check"
 sleep 5
 
-services=("postgresql" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo")
+services=("postgresql" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo" "traefik")
 failed_services=()
 
 for service in "${services[@]}"; do

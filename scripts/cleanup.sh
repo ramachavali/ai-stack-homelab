@@ -5,26 +5,29 @@
 # Removes unnecessary files and folders from the project
 # =================================================================
 
-set -e
+set -o errexit
+set -o nounset
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-BOLD='\033[1m'
-NC='\033[0m'
+#set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-echo -e "${BLUE}${BOLD}🧹 AI Stack Cleanup${NC}"
+# Load environment variables
+if [ -f ./.rendered.env ]; then
+    source ./.rendered.env
+else
+    echo -e "❌ .env file not found"
+    exit 1
+fi
+
+echo -e "🧹 AI Stack Cleanup"
 echo "==================="
 echo ""
 echo "This script will remove unnecessary files and folders from your AI Stack project."
 echo ""
-echo -e "${YELLOW}What will be removed:${NC}"
+echo -e "What will be removed:"
 echo "• 5 outdated documentation files"
 echo "• 1 redundant environment file (.env.prod)"
 echo "• All .DS_Store system files (safe to remove)"
@@ -45,7 +48,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo ""
-echo -e "${BLUE}Starting cleanup...${NC}"
+echo -e "🔹 Starting cleanup..."
 echo ""
 
 # Function to safely remove file/directory
@@ -54,16 +57,16 @@ safe_remove() {
     local description="$2"
     
     if [ -e "$path" ]; then
-        echo -e "${YELLOW}Removing: $description${NC}"
+        echo -e "  ⚠️  Removing: $description"
         rm -rf "$path"
-        echo -e "${GREEN}✅ Removed: $path${NC}"
+        echo -e "  ✅ Removed: $path"
     else
-        echo -e "${BLUE}ℹ️  Not found (already clean): $path${NC}"
+        echo -e "  ℹ️  Not found (already clean): $path"
     fi
 }
 
 # 1. Remove outdated documentation files
-echo -e "${BLUE}📚 Cleaning up outdated documentation...${NC}"
+echo -e "📚 Cleaning up outdated documentation..."
 safe_remove "docs/postgresql-17.5-migration-guide.md" "PostgreSQL 17.5 migration guide"
 safe_remove "docs/postgresql-migration-guide.md" "PostgreSQL migration guide"
 safe_remove "docs/script-updates-summary.md" "Script updates summary"
@@ -71,32 +74,32 @@ safe_remove "docs/service-name-change-summary.md" "Service name change summary"
 safe_remove "docs/vector-database-guide.md" "Vector database guide"
 
 # 2. Remove redundant environment file
-echo -e "${BLUE}⚙️ Cleaning up environment files...${NC}"
+echo -e "⚙️ Cleaning up environment files..."
 safe_remove ".env.prod" "Redundant production environment file"
 
 # 3. Remove system files
-echo -e "${BLUE}🖥️ Cleaning up system files...${NC}"
-echo -e "${YELLOW}Removing .DS_Store files...${NC}"
+echo -e "🖥️ Cleaning up system files..."
+echo -e "Removing .DS_Store files..."
 find . -name ".DS_Store" -type f -delete 2>/dev/null || true
-echo -e "${GREEN}✅ Removed all .DS_Store files${NC}"
+echo -e "✅ Removed all .DS_Store files"
 
 # 4. Remove empty/unused config directories
-echo -e "${BLUE}📁 Cleaning up unused config directories...${NC}"
+echo -e "📁 Cleaning up unused config directories..."
 safe_remove "configs/litellm" "Unused LiteLLM config directory"
 safe_remove "configs/nginx" "Unused Nginx config directory"
 safe_remove "logs/nginx" "Unused Nginx logs directory"
 
 # 5. Remove .gitkeep files
-echo -e "${BLUE}🔗 Cleaning up .gitkeep files...${NC}"
+echo -e "🔗 Cleaning up .gitkeep files..."
 safe_remove "configs/n8n/.gitkeep" "n8n .gitkeep file"
 safe_remove "configs/ollama/.gitkeep" "Ollama .gitkeep file"
 
 # 6. Remove redundant data directory
-echo -e "${BLUE}💾 Cleaning up redundant data directories...${NC}"
+echo -e "💾 Cleaning up redundant data directories..."
 safe_remove "data/open-webui" "Redundant open-webui data directory"
 
 # 7. Remove outdated PostgreSQL extension file
-echo -e "${BLUE}🐘 Cleaning up outdated PostgreSQL files...${NC}"
+echo -e "🐘 Cleaning up outdated PostgreSQL files..."
 safe_remove "configs/postgres/init/00-install-extensions.sql" "Outdated PostgreSQL extension script"
 
 # 8. Optional: Remove VS Code workspace file
@@ -108,14 +111,14 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Clean up empty directories
-echo -e "${BLUE}🗂️ Cleaning up empty directories...${NC}"
+echo -e "🗂️ Cleaning up empty directories..."
 find . -type d -empty -not -path "./.git/*" -delete 2>/dev/null || true
-echo -e "${GREEN}✅ Removed empty directories${NC}"
+echo -e "✅ Removed empty directories"
 
 echo ""
-echo -e "${GREEN}${BOLD}🎉 Cleanup completed successfully!${NC}"
+echo -e "🎉 Cleanup completed successfully!"
 echo ""
-echo -e "${BOLD}Summary of what was removed:${NC}"
+echo -e "Summary of what was removed:   "
 echo "• 5 outdated documentation files"
 echo "• 1 redundant environment file"
 echo "• All .DS_Store system files"
@@ -128,16 +131,16 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "• VS Code workspace file"
 fi
 echo ""
-echo -e "${BLUE}💡 Benefits achieved:${NC}"
+echo -e "💡 Benefits achieved:"
 echo "• Cleaner project structure"
 echo "• Reduced confusion for users"
 echo "• Smaller download/clone size"
 echo "• Only relevant files remain"
 echo "• Production-ready appearance"
 echo ""
-echo -e "${GREEN}Your AI Stack is now optimized and clean! 🚀${NC}"
+echo -e "Your AI Stack is now optimized and clean! 🚀"
 echo ""
-echo -e "${BOLD}Next steps:${NC}"
+echo -e "Next steps:"
 echo "• Review the remaining project structure"
 echo "• Test that all scripts still work correctly"
 echo "• Update any personal documentation if needed"
