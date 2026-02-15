@@ -36,30 +36,13 @@ echo ""
 # Step 2: Create .env file
 echo -e "${BLUE}[2/4]${NC} Configuring environment..."
 if [ ! -f .env ]; then
-    echo -e "${YELLOW}Creating .env from template...${NC}"
-    cp .env.example .env
-
-    echo -e "${RED}${BOLD}IMPORTANT: You must edit .env file!${NC}"
-    echo ""
-    echo "Required updates:"
-    echo "  1. Generate secure passwords and keys"
-    echo "  2. Update HOST_*_PATH variables with your username"
-    echo ""
-    echo "Generate keys with:"
-    echo "  ${BLUE}openssl rand -hex 16${NC}       # For encryption keys"
-    echo "  ${BLUE}openssl rand -base64 32${NC}    # For passwords"
-    echo ""
-
-    read -p "Press Enter to open .env in your default editor..."
-    open .env 2>/dev/null || nano .env || vi .env
-
-    echo ""
-    read -p "Have you configured .env? (y/n): " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "Please configure .env and run this script again"
+    echo -e "${YELLOW}Copying and sourcing .env from template...${NC}"
+    cp scripts/.env.example .env
+    source .env > /dev/null 2>&1 || {
+        echo -e "${RED}✗ Failed to load .env${NC}"
         exit 1
-    fi
+    }
+
 else
     echo -e "${GREEN}✓ .env file exists${NC}"
 fi

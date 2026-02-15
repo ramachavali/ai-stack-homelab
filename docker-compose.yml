@@ -211,8 +211,8 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgresql:5432/openwebui_db
       OLLAMA_BASE_URL: http://ollama:11434
       LITELLM_BASE_URL: ${LITELLM_BASE_URL:-http://litellm:4000}
-      WEBUI_NAME: ${OPEN_WEBUI_NAME:-Viridae Network}
-      OPEN_WEBUI_NAME: ${OPEN_WEBUI_NAME:-Viridae Network}
+      WEBUI_NAME: ${OPEN_WEBUI_NAME:-AI Network}
+      OPEN_WEBUI_NAME: ${OPEN_WEBUI_NAME:-AI Network}
       WEBUI_SECRET_KEY: ${OPEN_WEBUI_SECRET_KEY}
       ENABLE_SIGNUP: ${ENABLE_SIGNUP:-false}
       DEFAULT_USER_ROLE: ${DEFAULT_USER_ROLE:-user}
@@ -229,11 +229,13 @@ services:
     volumes:
       - open_webui_data:/app/backend/data
       - ${HOST_DOWNLOADS_PATH}:/mnt/host/downloads:rw
-      - ${HOST_VIRIDAE_PATH}:/mnt/host/viridae-network:rw
+      - ${HOST_NETWORK_PATH}:/mnt/host/${USERNAME}-network:rw
       - ${HOST_DROPZONE_PATH}:/mnt/host/dropzone:rw
       - ${HOST_DOCSTORE_PATH}:/mnt/host/docstore:rw
     networks:
       - ai-stack
+    ports:
+      - "8080:8080"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.open-webui.rule=Host(`open-webui.local`)"
@@ -257,7 +259,7 @@ services:
 
   # LiteLLM Proxy
   litellm:
-    image: ghcr.io/berriai/litellm:${LITELLM_VERSION:-main-stable}
+    image: ghcr.io/berriai/litellm:latest
     container_name: litellm
     restart: unless-stopped
     depends_on:
