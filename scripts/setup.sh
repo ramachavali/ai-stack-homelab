@@ -72,6 +72,33 @@ setup_environment() {
 if [ ! -f .env ]; then
     echo -e "Copying and sourcing .env from template..."
     cp scripts/.env.example ./.env
+
+    read_env() {
+    local filePath="${1:-.env}"
+
+    if [ ! -f "$filePath" ]; then
+        echo "missing ${filePath}"
+        exit 1
+    fi
+
+    echo "Reading $filePath"
+    while read -r LINE; do
+        # Remove leading and trailing whitespaces, and carriage return
+        CLEANED_LINE=$(echo "$LINE" | awk '{$1=$1};1' | tr -d '\r')
+
+        if [[ $CLEANED_LINE != '#'* ]] && [[ $CLEANED_LINE == *'='* ]]; then
+        export "$CLEANED_LINE" >> .env
+        export "$CLEANED_LINE" >> current_run.env
+
+        fi
+    done < "$filePath"
+    }
+
+    read_env scripts/.env.example || {
+        echo -e "✗ Failed to load .env file"
+        exit 1
+    }
+    
     source ./.env > /dev/null 2>&1 || {
         echo -e "✗ Failed to load .env file"
         exit 1
