@@ -117,7 +117,6 @@ setup_environment() {
     source "${PROJECT_ROOT}/.env" > /dev/null
     
     env
-    env >> "${PROJECT_ROOT}/current_run.env"
     echo -e "✅ Environment variables loaded"
 }
 
