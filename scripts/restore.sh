@@ -55,7 +55,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --list|-l)
-            echo -e "${BLUE}📋 Available backups:${NC}"
+            echo -e "${BLUE}📋 Available backups:"
             echo "==================="
             if [ -d "$BACKUP_DIR" ]; then
                 find "$BACKUP_DIR" -name "backup_manifest_*.json" | sort -r | while read manifest; do
@@ -85,11 +85,11 @@ while [[ $# -gt 0 ]]; do
             echo "Examples:"
             echo "  $0 --list                    # List available backups"
             echo "  $0 --date 20240101_120000    # Restore full backup from specific date"
-            echo "  $0 --service postgres        # Restore only PostgreSQL from latest backup"
+            echo "  $0 --service postgresql        # Restore only PostgreSQL from latest backup"
             exit 0
             ;;
         *)
-            echo -e "${RED}Unknown option: $1${NC}"
+            echo -e "${RED}Unknown option: $1"
             exit 1
             ;;
     esac
@@ -154,7 +154,7 @@ restore_postgres() {
     main_backup=$(decrypt_file "$BACKUP_DIR/postgres_main_${RESTORE_DATE}.sql.gz")
     if [ -n "$main_backup" ] && [ -f "$main_backup" ]; then
         echo -e "  📊 Restoring main database..."
-        zcat "$main_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+        zcat "$main_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
         rm -f "$main_backup"
     fi
     
@@ -162,8 +162,8 @@ restore_postgres() {
     n8n_backup=$(decrypt_file "$BACKUP_DIR/postgres_n8n_${RESTORE_DATE}.sql.gz")
     if [ -n "$n8n_backup" ] && [ -f "$n8n_backup" ]; then
         echo -e "  🔄 Restoring n8n database..."
-        docker exec ai-postgres createdb -U "$POSTGRES_USER" n8n_prod 2>/dev/null || true
-        zcat "$n8n_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "n8n_prod"
+        docker exec ai-postgresql createdb -U "$POSTGRES_USER" n8n_prod 2>/dev/null || true
+        zcat "$n8n_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "n8n_prod"
         rm -f "$n8n_backup"
     fi
     
@@ -171,8 +171,8 @@ restore_postgres() {
     litellm_backup=$(decrypt_file "$BACKUP_DIR/postgres_litellm_${RESTORE_DATE}.sql.gz")
     if [ -n "$litellm_backup" ] && [ -f "$litellm_backup" ]; then
         echo -e "  🎯 Restoring LiteLLM database..."
-        docker exec ai-postgres createdb -U "$POSTGRES_USER" litellm_prod 2>/dev/null || true
-        zcat "$litellm_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "litellm_prod"
+        docker exec ai-postgresql createdb -U "$POSTGRES_USER" litellm_prod 2>/dev/null || true
+        zcat "$litellm_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "litellm_prod"
         rm -f "$litellm_backup"
     fi
     
@@ -180,8 +180,8 @@ restore_postgres() {
     open_webui_backup=$(decrypt_file "$BACKUP_DIR/postgres_open_webui_${RESTORE_DATE}.sql.gz")
     if [ -n "$open_webui_backup" ] && [ -f "$open_webui_backup" ]; then
         echo -e "  🌐 Restoring Open WebUI database..."
-        docker exec ai-postgres createdb -U "$POSTGRES_USER" open_webui_db 2>/dev/null || true
-        zcat "$open_webui_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "open_webui_db"
+        docker exec ai-postgresql createdb -U "$POSTGRES_USER" open_webui_db 2>/dev/null || true
+        zcat "$open_webui_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "open_webui_db"
         rm -f "$open_webui_backup"
     fi
     

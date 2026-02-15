@@ -64,7 +64,7 @@ while [[ $# -gt 0 ]]; do
             echo "Examples:"
             echo "  $0                       # Full backup"
             echo "  $0 --type data           # Data only backup"
-            echo "  $0 --service postgres    # PostgreSQL only"
+            echo "  $0 --service postgresql   # PostgreSQL only"
             exit 0
             ;;
         *)
@@ -115,10 +115,10 @@ backup_postgres() {
     # Backup main database
     echo "  📊 Backing up main database..."
     if [ "$COMPRESS" = true ]; then
-        docker exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_DIR/postgres_main_${DATE}.sql.gz"
+        docker exec postgresql pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_DIR/postgres_main_${DATE}.sql.gz"
         encrypt_file "$BACKUP_DIR/postgres_main_${DATE}.sql.gz"
     else
-        docker exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "$BACKUP_DIR/postgres_main_${DATE}.sql"
+        docker exec postgresql pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > "$BACKUP_DIR/postgres_main_${DATE}.sql"
         encrypt_file "$BACKUP_DIR/postgres_main_${DATE}.sql"
     fi
     
@@ -128,12 +128,12 @@ backup_postgres() {
         for db in "${DBS[@]}"; do
             db=$(echo "$db" | xargs) # trim whitespace
             echo "  📊 Backing up database: $db..."
-            if docker exec postgres psql -U "$POSTGRES_USER" -lqt | cut -d \| -f 1 | grep -qw "$db"; then
+            if docker exec postgresql psql -U "$POSTGRES_USER" -lqt | cut -d \| -f 1 | grep -qw "$db"; then
                 if [ "$COMPRESS" = true ]; then
-                    docker exec postgres pg_dump -U "$POSTGRES_USER" "$db" | gzip > "$BACKUP_DIR/postgres_${db}_${DATE}.sql.gz"
+                    docker exec postgresql pg_dump -U "$POSTGRES_USER" "$db" | gzip > "$BACKUP_DIR/postgres_${db}_${DATE}.sql.gz"
                     encrypt_file "$BACKUP_DIR/postgres_${db}_${DATE}.sql.gz"
                 else
-                    docker exec postgres pg_dump -U "$POSTGRES_USER" "$db" > "$BACKUP_DIR/postgres_${db}_${DATE}.sql"
+                    docker exec postgresql pg_dump -U "$POSTGRES_USER" "$db" > "$BACKUP_DIR/postgres_${db}_${DATE}.sql"
                     encrypt_file "$BACKUP_DIR/postgres_${db}_${DATE}.sql"
                 fi
             else
