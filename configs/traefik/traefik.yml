@@ -1,6 +1,10 @@
 # Traefik Static Configuration
 # Reverse proxy for AI Stack with self-signed SSL
 
+
+# need to have ping to healthcheck v3 and 
+ping: {}
+
 # API and Dashboard
 api:
   dashboard: true
