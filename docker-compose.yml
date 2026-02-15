@@ -269,6 +269,8 @@ services:
         condition: service_healthy
     security_opt:
       - no-new-privileges:true
+    ports:
+      - "4000:4000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgresql:5432/litellm_db
       REDIS_HOST: redis
