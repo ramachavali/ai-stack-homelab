@@ -1,41 +1,45 @@
 #!/bin/bash
-set -e
+set -o errexit
+set -o nounset
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+#set -x
 
-echo -e "${BLUE}🔧 pgvector Installation Script${NC}"
+echo -e "🔧 pgvector Installation Script"
 echo "=================================="
 
+# Load environment variables
+if [ -f ./.rendered.env ]; then
+    source ./.rendered.env
+else
+    echo -e "❌ .env file not found"
+    exit 1
+fi
+
 # Check if PostgreSQL is running
-if ! docker-compose ps postgres | grep -q "Up"; then
-    echo -e "${RED}❌ PostgreSQL is not running. Please start it first with: ./scripts/start.sh${NC}"
+if ! docker-compose ps postgresql | grep -q "Up"; then
+    echo -e "❌ PostgreSQL is not running. Please start it first with: ./scripts/start.sh"
     exit 1
 fi
 
 # Check if pgvector is already installed
-echo -e "${BLUE}🔍 Checking if pgvector is already installed...${NC}"
-if docker exec postgres psql -U aistack_prod -d aistack_production -c "SELECT 1 FROM pg_extension WHERE extname = 'vector';" 2>/dev/null | grep -q "1"; then
-    echo -e "${GREEN}✅ pgvector extension is already installed and enabled${NC}"
+echo -e "🔍 Checking if pgvector is already installed..."
+if docker exec postgresql psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1 FROM pg_extension WHERE extname = 'vector';" 2>/dev/null | grep -q "1"; then
+    echo -e "✅ pgvector extension is already installed and enabled"
     exit 0
 fi
 
-echo -e "${YELLOW}⚠️  pgvector extension not found. Installing...${NC}"
+echo -e "⚠️  pgvector extension not found. Installing..."
 
 # Method 1: Try to install from PostgreSQL repositories
-echo -e "${BLUE}📦 Attempting to install pgvector from PostgreSQL repositories...${NC}"
-if docker exec postgres bash -c "apt-get update && apt-get install -y postgresql-17-pgvector" 2>/dev/null; then
-    echo -e "${GREEN}✅ pgvector installed successfully from repositories${NC}"
+echo -e "📦 Attempting to install pgvector from PostgreSQL repositories..."
+if docker exec postgresql bash -c "apt-get update && apt-get install -y postgresql-17-pgvector" 2>/dev/null; then
+    echo -e "✅ pgvector installed successfully from repositories"
 else
-    echo -e "${YELLOW}⚠️  Could not install from repositories. Trying alternative method...${NC}"
+    echo -e "⚠️  Could not install from repositories. Trying alternative method..."
     
     # Method 2: Install build dependencies and compile from source
-    echo -e "${BLUE}🔨 Installing build dependencies and compiling pgvector from source...${NC}"
-    docker exec postgres bash -c "
+    echo -e "🔨 Installing build dependencies and compiling pgvector from source... "
+    docker exec postgresql bash -c "
         apt-get update &&
         apt-get install -y build-essential git postgresql-server-dev-17 &&
         cd /tmp &&
@@ -45,40 +49,40 @@ else
         make install &&
         rm -rf /tmp/pgvector
     "
-    echo -e "${GREEN}✅ pgvector compiled and installed from source${NC}"
+    echo -e "✅ pgvector compiled and installed from source"
 fi
 
 # Restart PostgreSQL to load the new extension
-echo -e "${BLUE}🔄 Restarting PostgreSQL to load pgvector...${NC}"
-docker-compose restart postgres
+echo -e "🔄 Restarting PostgreSQL to load pgvector..."
+docker-compose restart postgresql
 
 # Wait for PostgreSQL to be ready
-echo -e "${BLUE}⏳ Waiting for PostgreSQL to be ready...${NC}"
-until docker exec postgres pg_isready -h localhost -U aistack_prod -d aistack_production > /dev/null 2>&1; do
+echo -e "⏳ Waiting for PostgreSQL to be ready..."
+until docker exec postgresql pg_isready -h localhost -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; do
     echo -n "."
     sleep 2
 done
-echo -e "\n${GREEN}✅ PostgreSQL is ready${NC}"
+echo -e "\n✅ PostgreSQL is ready"
 
 # Create the extension
-echo -e "${BLUE}🔧 Creating pgvector extension...${NC}"
-docker exec postgres psql -U aistack_prod -d aistack_production -c "CREATE EXTENSION IF NOT EXISTS vector;"
+echo -e "🔧 Creating pgvector extension..."
+docker exec postgresql psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS vector;"
 
 # Verify installation
-echo -e "${BLUE}🔍 Verifying installation...${NC}"
-if docker exec postgres psql -U aistack_prod -d aistack_production -c "SELECT 1 FROM pg_extension WHERE extname = 'vector';" | grep -q "1"; then
-    echo -e "${GREEN}✅ pgvector extension installed and enabled successfully!${NC}"
+echo -e "🔍 Verifying installation..."
+if docker exec postgresql psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1 FROM pg_extension WHERE extname = 'vector';" | grep -q "1"; then
+    echo -e "✅ pgvector extension installed and enabled successfully!"
     
     # Test vector operations
-    echo -e "${BLUE}🧪 Testing vector operations...${NC}"
-    if docker exec postgres psql -U aistack_prod -d aistack_production -c "SELECT '[1,2,3]'::vector;" 2>/dev/null | grep -q "vector"; then
-        echo -e "${GREEN}✅ Vector operations working correctly!${NC}"
+    echo -e "🧪 Testing vector operations..."
+    if docker exec postgresql psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT '[1,2,3]'::vector;" 2>/dev/null | grep -q "vector"; then
+        echo -e "✅ Vector operations working correctly!"
     else
-        echo -e "${YELLOW}⚠️  Vector operations test failed${NC}"
+        echo -e "⚠️  Vector operations test failed"
     fi
 else
-    echo -e "${RED}❌ Failed to install pgvector extension${NC}"
+    echo -e "❌ Failed to install pgvector extension"
     exit 1
 fi
 
-echo -e "${GREEN}🎉 pgvector installation completed successfully!${NC}" 
+echo -e "🎉 pgvector installation completed successfully!" 

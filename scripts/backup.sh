@@ -28,6 +28,7 @@ DATE=$(date +%Y%m%d_%H%M%S)
 ENCRYPT="${BACKUP_ENCRYPT:-true}"
 ENCRYPTION_KEY="${BACKUP_ENCRYPTION_KEY:-}"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-30}"
+POSTGRES_ADDITIONAL_DBS="${POSTGRES_ADDITIONAL_DBS:-}"
 
 echo -e "💾 AI Stack Backup Utility"
 echo "============================"
@@ -123,8 +124,8 @@ backup_postgres() {
     fi
     
     # Backup additional databases
-    if [ -n "$POSTGRES_ADDITIONAL_DBS" ]; then
-        IFS=',' read -ra DBS <<< "$POSTGRES_ADDITIONAL_DBS"
+    if [ -n "${POSTGRES_ADDITIONAL_DBS}" ]; then
+        IFS=',' read -ra DBS <<< "${POSTGRES_ADDITIONAL_DBS}"
         for db in "${DBS[@]}"; do
             db=$(echo "$db" | xargs) # trim whitespace
             echo "  📊 Backing up database: $db..."
