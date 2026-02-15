@@ -104,8 +104,8 @@ safe_remove "configs/postgres/init/00-install-extensions.sql" "Outdated PostgreS
 
 # 7. Remove .env
 echo -e "🐘 Cleaning up environment files..."
-safe_remove "./.env" 
-safe_remove "./.rendered.env"
+safe_remove "./.env" "remove .env file"
+safe_remove "./.rendered.env" "remove .env file"
 
 echo -e "🐘 Cleaning up docker files..."
 docker volume prune
