@@ -259,8 +259,7 @@ services:
 
   # LiteLLM Proxy
   litellm:
-    image: ghcr.io/berriai/litellm:latest
-    command: ["--port", "4000"]
+    image: ghcr.io/berriai/litellm:${LITELLM_VERSION:-main-stable}
     container_name: litellm
     restart: unless-stopped
     depends_on:
