@@ -5,42 +5,37 @@
 # Simple startup with clear progress indicators for novice users
 # =================================================================
 
-set -e
+set -o errexit
+set -o nounset
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-BOLD='\033[1m'
-NC='\033[0m'
+set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-echo -e "${BLUE}${BOLD}🚀 Starting AI Stack...${NC}"
+echo -e "🚀 Starting AI Stack..."
 echo "========================"
 echo ""
 
 # Function to print step progress
 print_step() {
-    echo -e "${BLUE}$1${NC}"
+    echo -e "$1"
 }
 
 # Function to show success
 print_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "✅ $1"
 }
 
 # Function to show warning
 print_warning() {
-    echo -e "${YELLOW}⚠️ $1${NC}"
+    echo -e "⚠️ $1"
 }
 
 # Function to show error
 print_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "❌ $1"
 }
 
 # Function to wait for service with timeout
@@ -53,7 +48,7 @@ wait_for_service() {
     echo -n "  Waiting for $service to be ready"
     while [ $count -lt $timeout ]; do
         if eval "$check_command" > /dev/null 2>&1; then
-            echo -e "\n${GREEN}  ✅ $service is ready${NC}"
+            echo -e "\n  ✅ $service is ready"
             return 0
         fi
         echo -n "."
@@ -61,7 +56,7 @@ wait_for_service() {
         count=$((count + 2))
     done
     
-    echo -e "\n${RED}  ❌ $service failed to start within ${timeout}s${NC}"
+    echo -e "\n  ❌ $service failed to start within ${timeout}s"
     return 1
 }
 
@@ -77,9 +72,9 @@ if ! docker info > /dev/null 2>&1; then
 fi
 print_success "Docker is running"
 
-# Check if .env file exists
-if [ ! -f .env ]; then
-    print_error ".env file not found"
+# Check if current_run.env file exists
+if [ ! -f current_run.env ]; then
+    print_error "current_run.env file not found"
     echo ""
     echo "Please run ./scripts/setup.sh first"
     exit 1
@@ -87,7 +82,7 @@ fi
 print_success ".env file found"
 
 # Load environment variables
-source .env
+source current_run.env
 
 # Validate critical environment variables
 print_step "🔍 Validating Configuration"

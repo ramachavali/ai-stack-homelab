@@ -5,25 +5,21 @@
 # Simple, comprehensive backup for all AI Stack data
 # =================================================================
 
-set -e
+set -o errexit
+set -o nounset
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-BOLD='\033[1m'
-NC='\033[0m'
+set -x
+
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Load environment variables
-if [ -f .env ]; then
-    source .env
+if [ -f current_run.env ]; then
+    source current_run.env
 else
-    echo -e "${RED}❌ .env file not found${NC}"
+    echo -e "❌ .env file not found"
     exit 1
 fi
 
@@ -34,7 +30,7 @@ ENCRYPT="${BACKUP_ENCRYPT:-true}"
 ENCRYPTION_KEY="${BACKUP_ENCRYPTION_KEY:-}"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-30}"
 
-echo -e "${BLUE}${BOLD}💾 AI Stack Backup Utility${NC}"
+echo -e "💾 AI Stack Backup Utility"
 echo "============================"
 echo ""
 
@@ -83,7 +79,7 @@ done
 encrypt_file() {
     local file="$1"
     if [ "$ENCRYPT" = "true" ] && [ -n "$ENCRYPTION_KEY" ]; then
-        echo -e "${BLUE}🔒 Encrypting $(basename "$file")...${NC}"
+        echo -e "🔒 Encrypting $(basename "$file")..."
         openssl enc -aes-256-cbc -in "$file" -out "${file}.enc" -pass pass:"$ENCRYPTION_KEY"
         rm "$file"
         echo "${file}.enc"
@@ -94,12 +90,12 @@ encrypt_file() {
 
 # Function to check if services are running
 check_services() {
-    echo -e "${BLUE}🔍 Checking service status...${NC}"
+    echo -e "🔍 Checking service status..."
     
     if ! docker compose ps --services --filter "status=running" | grep -q postgres; then
-        echo -e "${YELLOW}⚠️ PostgreSQL is not running. Some backups may be incomplete.${NC}"
+        echo -e "⚠️ PostgreSQL is not running. Some backups may be incomplete."
     else
-        echo -e "${GREEN}✅ PostgreSQL is running${NC}"
+        echo -e "✅ PostgreSQL is running"
     fi
     
     echo ""
@@ -107,15 +103,15 @@ check_services() {
 
 # Function to create backup directory
 setup_backup_dir() {
-    echo -e "${BLUE}📁 Setting up backup directory...${NC}"
+    echo -e "📁 Setting up backup directory..."
     mkdir -p "$BACKUP_DIR"
-    echo -e "${GREEN}✅ Backup directory: $BACKUP_DIR${NC}"
+    echo -e "✅ Backup directory: $BACKUP_DIR"
     echo ""
 }
 
 # Function to backup PostgreSQL databases
 backup_postgres() {
-    echo -e "${BLUE}🐘 Backing up PostgreSQL databases...${NC}"
+    echo -e "🐘 Backing up PostgreSQL databases..."
     
     # Backup main database
     echo "  📊 Backing up main database..."

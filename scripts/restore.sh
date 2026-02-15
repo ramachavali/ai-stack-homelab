@@ -5,24 +5,20 @@
 # Restore from encrypted backups with verification
 # =================================================================
 
-set -e
+set -o errexit
+set -o nounset
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Load environment variables
-if [ -f .env ]; then
-    source .env
+if [ -f current_run.env ]; then
+    source current_run.env
 else
-    echo -e "${RED}❌ .env file not found${NC}"
+    echo -e "❌ current_run.env file not found"
     exit 1
 fi
 
@@ -31,7 +27,7 @@ BACKUP_DIR="${BACKUP_LOCATION:-$HOME/Documents/ai-stack-backups}"
 ENCRYPT="${BACKUP_ENCRYPT:-true}"
 ENCRYPTION_KEY="${BACKUP_ENCRYPTION_KEY:-}"
 
-echo -e "${BLUE}🔄 AI Stack Restore Utility${NC}"
+echo -e "🔄 AI Stack Restore Utility"
 echo "==========================="
 
 # Parse command line arguments
@@ -64,7 +60,7 @@ while [[ $# -gt 0 ]]; do
             if [ -d "$BACKUP_DIR" ]; then
                 find "$BACKUP_DIR" -name "backup_manifest_*.json" | sort -r | while read manifest; do
                     date_part=$(basename "$manifest" | sed 's/backup_manifest_//' | sed 's/.json//')
-                    echo -e "${GREEN}📅 $date_part${NC}"
+                    echo -e "📅 $date_part"
                     if command -v jq > /dev/null 2>&1; then
                         jq -r '. | "   Type: \(.backup_type)\n   Date: \(.backup_date)\n   Files: \(.files | length)"' "$manifest" 2>/dev/null || echo "   (Manifest details unavailable)"
                     fi
@@ -101,26 +97,26 @@ done
 
 # Find latest backup if no date specified
 if [ -z "$RESTORE_DATE" ]; then
-    echo -e "${BLUE}🔍 Finding latest backup...${NC}"
+    echo -e "🔍 Finding latest backup..."
     latest_manifest=$(find "$BACKUP_DIR" -name "backup_manifest_*.json" 2>/dev/null | sort -r | head -n1)
     if [ -z "$latest_manifest" ]; then
-        echo -e "${RED}❌ No backups found in $BACKUP_DIR${NC}"
+        echo -e "❌ No backups found in $BACKUP_DIR"
         exit 1
     fi
     RESTORE_DATE=$(basename "$latest_manifest" | sed 's/backup_manifest_//' | sed 's/.json//')
-    echo -e "${GREEN}📅 Using latest backup: $RESTORE_DATE${NC}"
+    echo -e "📅 Using latest backup: $RESTORE_DATE"
 fi
 
 # Verify backup exists
 MANIFEST_FILE="$BACKUP_DIR/backup_manifest_${RESTORE_DATE}.json"
 if [ ! -f "$MANIFEST_FILE" ]; then
-    echo -e "${RED}❌ Backup manifest not found: $MANIFEST_FILE${NC}"
+    echo -e "❌ Backup manifest not found: $MANIFEST_FILE"
     echo "Available backups:"
     find "$BACKUP_DIR" -name "backup_manifest_*.json" | sort -r | head -5
     exit 1
 fi
 
-echo -e "${BLUE}📋 Backup information:${NC}"
+echo -e "📋 Backup information:"
 if command -v jq > /dev/null 2>&1; then
     jq -r '. | "Date: \(.backup_date)\nType: \(.backup_type)\nServices: \(.services)\nFiles: \(.files | length)"' "$MANIFEST_FILE"
 else
@@ -131,7 +127,7 @@ fi
 decrypt_file() {
     local file="$1"
     if [ -f "${file}.enc" ] && [ "$ENCRYPT" = "true" ] && [ -n "$ENCRYPTION_KEY" ]; then
-        echo -e "${BLUE}🔓 Decrypting $(basename "$file")...${NC}"
+        echo -e "🔓 Decrypting $(basename "$file")..."
         openssl enc -aes-256-cbc -d -in "${file}.enc" -out "$file" -pass pass:"$ENCRYPTION_KEY"
         echo "$file"
     elif [ -f "$file" ]; then
@@ -143,7 +139,7 @@ decrypt_file() {
 
 # Function to restore PostgreSQL
 restore_postgres() {
-    echo -e "${BLUE}🐘 Restoring PostgreSQL databases...${NC}"
+    echo -e "🐘 Restoring PostgreSQL databases..."
     
     if [ "$DRY_RUN" = true ]; then
         echo "  [DRY RUN] Would restore PostgreSQL databases"
@@ -157,7 +153,7 @@ restore_postgres() {
     # Restore main database
     main_backup=$(decrypt_file "$BACKUP_DIR/postgres_main_${RESTORE_DATE}.sql.gz")
     if [ -n "$main_backup" ] && [ -f "$main_backup" ]; then
-        echo -e "${BLUE}  📊 Restoring main database...${NC}"
+        echo -e "  📊 Restoring main database..."
         zcat "$main_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
         rm -f "$main_backup"
     fi
@@ -165,7 +161,7 @@ restore_postgres() {
     # Restore n8n database
     n8n_backup=$(decrypt_file "$BACKUP_DIR/postgres_n8n_${RESTORE_DATE}.sql.gz")
     if [ -n "$n8n_backup" ] && [ -f "$n8n_backup" ]; then
-        echo -e "${BLUE}  🔄 Restoring n8n database...${NC}"
+        echo -e "  🔄 Restoring n8n database..."
         docker exec ai-postgres createdb -U "$POSTGRES_USER" n8n_prod 2>/dev/null || true
         zcat "$n8n_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "n8n_prod"
         rm -f "$n8n_backup"
@@ -174,7 +170,7 @@ restore_postgres() {
     # Restore LiteLLM database
     litellm_backup=$(decrypt_file "$BACKUP_DIR/postgres_litellm_${RESTORE_DATE}.sql.gz")
     if [ -n "$litellm_backup" ] && [ -f "$litellm_backup" ]; then
-        echo -e "${BLUE}  🎯 Restoring LiteLLM database...${NC}"
+        echo -e "  🎯 Restoring LiteLLM database..."
         docker exec ai-postgres createdb -U "$POSTGRES_USER" litellm_prod 2>/dev/null || true
         zcat "$litellm_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "litellm_prod"
         rm -f "$litellm_backup"
@@ -183,25 +179,25 @@ restore_postgres() {
     # Restore Open WebUI database
     open_webui_backup=$(decrypt_file "$BACKUP_DIR/postgres_open_webui_${RESTORE_DATE}.sql.gz")
     if [ -n "$open_webui_backup" ] && [ -f "$open_webui_backup" ]; then
-        echo -e "${BLUE}  🌐 Restoring Open WebUI database...${NC}"
+        echo -e "  🌐 Restoring Open WebUI database..."
         docker exec ai-postgres createdb -U "$POSTGRES_USER" open_webui_db 2>/dev/null || true
         zcat "$open_webui_backup" | docker exec -i ai-postgres psql -U "$POSTGRES_USER" -d "open_webui_db"
         rm -f "$open_webui_backup"
     fi
     
-    echo -e "${GREEN}✅ PostgreSQL restore completed${NC}"
+    echo -e "✅ PostgreSQL restore completed"
 }
 
 # Function to restore Docker volumes
 restore_volumes() {
-    echo -e "${BLUE}💾 Restoring Docker volumes...${NC}"
+    echo -e "💾 Restoring Docker volumes..."
     
     volumes=("n8n_data" "ollama_data" "open-webui_data" "redis_data" "litellm_data" "mcp_data")
     
     for volume in "${volumes[@]}"; do
         volume_backup=$(decrypt_file "$BACKUP_DIR/${volume}_${RESTORE_DATE}.tar.gz")
         if [ -n "$volume_backup" ] && [ -f "$volume_backup" ]; then
-            echo -e "${BLUE}  📁 Restoring ${volume}...${NC}"
+            echo -e "  📁 Restoring ${volume}..."
             
             if [ "$DRY_RUN" = true ]; then
                 echo "    [DRY RUN] Would restore volume: ai-stack_${volume}"
@@ -221,12 +217,12 @@ restore_volumes() {
         fi
     done
     
-    echo -e "${GREEN}✅ Volume restore completed${NC}"
+    echo -e "✅ Volume restore completed"
 }
 
 # Function to restore configuration files
 restore_configs() {
-    echo -e "${BLUE}⚙️  Restoring configuration files...${NC}"
+    echo -e "⚙️  Restoring configuration files..."
     
     config_backup=$(decrypt_file "$BACKUP_DIR/configs_${RESTORE_DATE}.tar.gz")
     if [ -n "$config_backup" ] && [ -f "$config_backup" ]; then
@@ -245,13 +241,13 @@ restore_configs() {
         rm -f "$config_backup"
     fi
     
-    echo -e "${GREEN}✅ Configuration restore completed${NC}"
+    echo -e "✅ Configuration restore completed"
 }
 
 # Function to restore specific service
 restore_service() {
     local service="$1"
-    echo -e "${BLUE}🎯 Restoring service: $service${NC}"
+    echo -e "🎯 Restoring service: $service"
     
     case "$service" in
         postgres)
@@ -272,11 +268,11 @@ restore_service() {
                 fi
                 rm -f "$volume_backup"
             else
-                echo -e "${YELLOW}⚠️  No backup found for service: $service${NC}"
+                echo -e "⚠️  No backup found for service: $service"
             fi
             ;;
         *)
-            echo -e "${RED}❌ Unknown service: $service${NC}"
+            echo -e "❌ Unknown service: $service"
             exit 1
             ;;
     esac
@@ -284,7 +280,7 @@ restore_service() {
 
 # Warning for non-dry-run
 if [ "$DRY_RUN" = false ]; then
-    echo -e "${RED}⚠️  WARNING: This will overwrite existing data!${NC}"
+    echo -e "⚠️  WARNING: This will overwrite existing data!"
     echo "Current data will be backed up before restoration."
     read -p "Continue? (y/N): " -n 1 -r
     echo ""
@@ -294,12 +290,12 @@ if [ "$DRY_RUN" = false ]; then
     fi
     
     # Stop services before restore
-    echo -e "${BLUE}🛑 Stopping AI Stack services...${NC}"
+    echo -e "🛑 Stopping AI Stack services..."
     docker compose down
 fi
 
 # Perform restore based on type
-echo -e "${BLUE}🔄 Starting $RESTORE_TYPE restore...${NC}"
+echo -e "🔄 Starting $RESTORE_TYPE restore..."
 
 case "$RESTORE_TYPE" in
     full)
@@ -323,14 +319,14 @@ case "$RESTORE_TYPE" in
         restore_configs
         ;;
     *)
-        echo -e "${RED}❌ Unknown restore type: $RESTORE_TYPE${NC}"
+        echo -e "❌ Unknown restore type: $RESTORE_TYPE"
         exit 1
         ;;
 esac
 
 if [ "$DRY_RUN" = false ]; then
     echo ""
-    echo -e "${GREEN}🎉 Restore completed successfully!${NC}"
+    echo -e "🎉 Restore completed successfully!"
     echo "=========================="
     echo "📅 Restored from: $RESTORE_DATE"
     echo "🔄 Type: $RESTORE_TYPE"
@@ -339,6 +335,6 @@ if [ "$DRY_RUN" = false ]; then
     echo "  ./scripts/start.sh"
 else
     echo ""
-    echo -e "${BLUE}🔍 Dry run completed${NC}"
+    echo -e "🔍 Dry run completed"
     echo "No changes were made to the system."
 fi
