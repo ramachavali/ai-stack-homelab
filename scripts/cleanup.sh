@@ -102,6 +102,11 @@ safe_remove "data/open-webui" "Redundant open-webui data directory"
 echo -e "🐘 Cleaning up outdated PostgreSQL files..."
 safe_remove "configs/postgres/init/00-install-extensions.sql" "Outdated PostgreSQL extension script"
 
+# 7. Remove .env
+echo -e "🐘 Cleaning up environment files..."
+safe_remove "./.env" "./.rendered.env"
+docker rmi $(docker images -a -q) 2>/dev/null || true
+
 # 8. Optional: Remove VS Code workspace file
 echo ""
 read -p "Remove VS Code workspace file? (y/N): " -n 1 -r
