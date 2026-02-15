@@ -9,61 +9,56 @@ set -o nounset
 
 set -x
 
-# Colors
-RED="\033[0;31m"
-GREEN="\033[0;32m"
-YELLOW="\033[1;33m"
-BLUE="\033[0;34m"
-BOLD="\033[1m"
-NC="\033[0m"
 
 # Project root
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_ROOT"
 
-echo -e "${BLUE}${BOLD}🚀 AI Stack Setup${NC}"
+echo -e "🚀 AI Stack Setup"
 echo "=================================="
 echo ""
 
 # Step 1: Check Docker
-echo -e "${BLUE}[1/4]${NC} Checking Docker..."
+echo -e "[1/4] Checking Docker..."
 if ! docker info > /dev/null 2>&1; then
-    echo -e "${RED}✗ Docker is not running${NC}"
+    echo -e "✗ Docker is not running"
     echo ""
     echo "Please start Docker Desktop and run this script again"
     exit 1
 fi
-echo -e "${GREEN}✓ Docker is running${NC}"
+echo -e "✓ Docker is running"
 echo ""
 
 # Step 2: Create .env file
-echo -e "${BLUE}[2/4]${NC} Configuring environment..."
+echo -e "[2/4] Configuring environment..."
 if [ ! -f .env ]; then
-    echo -e "${YELLOW}Copying and sourcing .env from template...${NC}"
+    echo -e "Copying and sourcing .env from template..."
     cp scripts/.env.example .env
-    source .env > /dev/null 2>&1 || {
-        echo -e "${RED}✗ Failed to load .env${NC}"
+    source ./.env > /dev/null 2>&1 || {
+        echo -e "✗ Failed to load .env file"
         exit 1
     }
 
 else
-    echo -e "${GREEN}✓ .env file exists${NC}"
+    env
+    env >> .tmp.env
+    echo -e "✓ .env file exists and loaded"
 fi
 echo ""
 
 # Step 3: Pull Docker images
-echo -e "${BLUE}[3/4]${NC} Downloading Docker images..."
+echo -e "[3/4] Downloading Docker images..."
 echo "This may take several minutes..."
 if docker-compose pull; then
-    echo -e "${GREEN}✓ All images downloaded${NC}"
+    echo -e "✓ All images downloaded successfully"
 else
-    echo -e "${RED}✗ Failed to download images${NC}"
+    echo -e "✗ Failed to download images"
     exit 1
 fi
 echo ""
 
 # Step 4: Generate self-signed SSL certificate for Traefik
-echo -e "${BLUE}[4/4]${NC} Generating SSL certificates..."
+echo -e "[4/4] Generating SSL certificates..."
 mkdir -p certs
 if [ ! -f certs/cert.pem ] || [ ! -f certs/key.pem ]; then
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -72,31 +67,31 @@ if [ ! -f certs/cert.pem ] || [ ! -f certs/key.pem ]; then
         -subj "/C=US/ST=State/L=City/O=AI-Stack/CN=*.local" \
         -addext "subjectAltName=DNS:*.local,DNS:localhost" \
         > /dev/null 2>&1
-    echo -e "${GREEN}✓ SSL certificates generated${NC}"
+    echo -e "✓ SSL certificates generated"
 else
-    echo -e "${GREEN}✓ SSL certificates already exist${NC}"
+    echo -e "✓ SSL certificates already exist"
 fi
 echo ""
 
 # Completion message
-echo -e "${GREEN}${BOLD}✓ Setup Complete!${NC}"
+echo -e "✓ Setup Complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Start the ollama:  ${BLUE}docker-compose up -d ollama${NC}"
-echo "  2. copy init file: ${BLUE}docker cp configs/ollama/init-models.sh ollama:/root/.ollama/init-models.sh${NC}"
-echo "  3. Download models:  ${BLUE}docker exec ollama sh -c '/bin/bash /root/.ollama/init-models.sh --llm llama3.2:3b --llm granite4:latest --llm gemma3:latest ' &${NC}"
+echo "  1. Start the ollama:  docker-compose up -d ollama"
+echo "  2. copy init file: docker cp configs/ollama/init-models.sh ollama:/root/.ollama/init-models.sh"
+echo "  3. Download models:  docker exec ollama sh -c '/bin/bash /root/.ollama/init-models.sh --llm llama3.2:3b --llm granite4:latest --llm gemma3:latest ' &"
 echo "     (This runs in background and takes 10-20 minutes)"
-echo "  4. Start the stack:  ${BLUE}docker-compose up -d${NC}"
+echo "  4. Start the stack:  docker-compose up -d"
 echo ""
 echo "  5. Access services at:"
-echo "     • Open WebUI:    ${BLUE}https://open-webui.local${NC}"
-echo "     • n8n:           ${BLUE}https://n8n.local${NC}"
-echo "     • LiteLLM:       ${BLUE}https://litellm.local${NC}"
-echo "     • SearXNG:       ${BLUE}https://searxng.local${NC}"
-echo "     • Traefik:       ${BLUE}https://traefik.local${NC}"
+echo "     • Open WebUI:    https://open-webui.local"
+echo "     • n8n:           https://n8n.local"
+echo "     • LiteLLM:       https://litellm.local"
+echo "     • SearXNG:       https://searxng.local"
+echo "     • Traefik:       https://traefik.local"
 echo ""
 echo "Note: Add these entries to /etc/hosts:"
-echo "  ${YELLOW}127.0.0.1 open-webui.local n8n.local litellm.local traefik.local ollama.local mcpo.local searxng.local${NC}"
+echo "  127.0.0.1 open-webui.local n8n.local litellm.local traefik.local ollama.local mcpo.local searxng.local"
 echo ""
-echo "Monitor with: ${BLUE}docker-compose logs -f${NC}"
+echo "Monitor with: docker-compose logs -f"
 echo ""
