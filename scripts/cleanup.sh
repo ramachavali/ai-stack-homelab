@@ -108,7 +108,7 @@ safe_remove "./.env" "remove .env file"
 safe_remove "./.rendered.env" "remove .env file"
 
 echo -e "🐘 Cleaning up docker files..."
-docker volume prune
+docker volume rm $(docker volume ls |awk '{print $2}')
 docker rmi $(docker images -a -q) 2>/dev/null || true
 docker system prune -a -f 2>/dev/null || true
 
