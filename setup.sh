@@ -4,7 +4,10 @@
 # Streamlined initialization for home lab deployment
 # =================================================================
 
-set -e
+set -o errexit
+set -o nounset
+
+set -x
 
 # Colors
 RED="\033[0;31m"
