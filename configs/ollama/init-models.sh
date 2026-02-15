@@ -2,7 +2,36 @@
 # Ollama Model Initialization Script
 # Auto-downloads required AI models on first startup
 
-set -e
+#!/usr/bin/env bash
+set -o errexit
+set -o nounset
+
+set -x
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  ollama-init-models.sh \
+    [--llm <llm>] \
+    [--llm <llm>]...
+
+Examples:
+  ./scripts/ollama-init-models.sh --llm llama3.2:3b --llm qwen2.5:7b-instruct
+
+EOF
+}
+LLMS=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --llm) LLMS+=("$2"); shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown arg: $1"; usage; exit 1 ;;
+  esac
+done
+
+[[ ${#LLMS[@]} -eq 0 ]] && { usage; exit 1; }
+
 
 echo "🤖 Ollama Model Initialization"
 echo "=============================="
@@ -22,41 +51,24 @@ echo ""
 
 # Function to check if model exists
 model_exists() {
-    ollama list | grep -q "^$1"
+    ollama list | grep -Fxq -- "$1"
 }
 
 # Download llama3.2:3b
-echo "📥 Checking llama3.2:3b..."
-if model_exists "llama3.2:3b"; then
-    echo "✅ llama3.2:3b already downloaded"
+echo "📥 Checking if models exists..."
+i=1
+for model in "${LLMS[@]}"; do
+    echo "Model ${i} = ${model}"
+    if model_exists "$model"; then
+    echo "✅ $model already downloaded"
 else
-    echo "⬇️  Downloading llama3.2:3b (~2GB)..."
-    ollama pull llama3.2:3b
-    echo "✅ llama3.2:3b downloaded successfully"
+    echo "⬇️  Downloading $model..."
+    ollama pull "$model"
+    echo "✅ $model downloaded successfully"
 fi
 echo ""
-
-# Download qwen2.5:7b-instruct
-echo "📥 Checking qwen2.5:7b-instruct..."
-if model_exists "qwen2.5:7b-instruct"; then
-    echo "✅ qwen2.5:7b-instruct already downloaded"
-else
-    echo "⬇️  Downloading qwen2.5:7b-instruct (~4.7GB)..."
-    ollama pull qwen2.5:7b-instruct
-    echo "✅ qwen2.5:7b-instruct downloaded successfully"
-fi
-echo ""
-
-# Download nomic-embed-text (for embeddings)
-echo "📥 Checking nomic-embed-text..."
-if model_exists "nomic-embed-text"; then
-    echo "✅ nomic-embed-text already downloaded"
-else
-    echo "⬇️  Downloading nomic-embed-text (~274MB)..."
-    ollama pull nomic-embed-text
-    echo "✅ nomic-embed-text downloaded successfully"
-fi
-echo ""
+    i=$((i+1))
+done
 
 echo "🎉 All models ready!"
 ollama list

@@ -150,7 +150,7 @@ openssl x509 -req \
   -out "$LEAF_CRT" \
   -days "$DAYS_LEAF" -sha256 \
   -extfile "$V3" \
-  -copy_extensions copy
+#  -copy_extensions copy
 
 chmod 644 "$LEAF_CRT"
 
