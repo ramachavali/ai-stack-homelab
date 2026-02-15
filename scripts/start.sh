@@ -107,7 +107,7 @@ print_step "🚀 Starting Services"
 
 # 1. Start PostgreSQL
 print_step "  🐘 Starting PostgreSQL database..."
-docker compose up -d postgres
+docker-compose up -d postgres
 wait_for_service "PostgreSQL" "docker exec postgres pg_isready -h localhost -U $POSTGRES_USER -d $POSTGRES_DB" 60
 
 # Check for pgvector extension
@@ -118,12 +118,12 @@ fi
 
 # 2. Start Redis
 print_step "  🔴 Starting Redis cache..."
-docker compose up -d redis
+docker-compose up -d redis
 wait_for_service "Redis" "docker exec redis redis-cli -a '$REDIS_PASSWORD' ping" 30
 
 # 3. Start Ollama
 print_step "  🤖 Starting Ollama AI server..."
-docker compose up -d ollama
+docker-compose up -d ollama
 wait_for_service "Ollama" "curl -f http://localhost:${OLLAMA_PORT:-11434}/api/tags" 90
 
 # Check for AI models
@@ -137,22 +137,22 @@ fi
 
 # 4. Start n8n
 print_step "  🔄 Starting n8n workflow engine..."
-docker compose up -d n8n
+docker-compose up -d n8n
 wait_for_service "n8n" "curl -f http://localhost:${N8N_PORT:-5678}/healthz" 90
 
 # 5. Start LiteLLM
 print_step "  🎯 Starting LiteLLM proxy..."
-docker compose up -d litellm
+docker-compose up -d litellm
 wait_for_service "LiteLLM" "curl -f http://localhost:${LITELLM_PORT:-4000}/health/liveliness" 60
 
 # 6. Start Open WebUI
 print_step "  🌐 Starting Open WebUI..."
-docker compose up -d open-webui
+docker-compose up -d open-webui
 wait_for_service "Open WebUI" "curl -f http://localhost:${OPEN_WEBUI_PORT:-8080}/health" 60
 
 # 7. Start MCP servers
 print_step "  🔗 Starting MCP servers..."
-docker compose up -d n8n-mcp mcpo
+docker-compose up -d n8n-mcp mcpo
 sleep 15  # Give MCP servers time to initialize
 
 # Final health check
@@ -163,7 +163,7 @@ services=("postgres" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mc
 failed_services=()
 
 for service in "${services[@]}"; do
-    if ! docker compose ps --services --filter "status=running" | grep -q "^$service$"; then
+    if ! docker-compose ps --services --filter "status=running" | grep -q "^$service$"; then
         failed_services+=("$service")
     fi
 done
@@ -187,8 +187,8 @@ if [ ${#failed_services[@]} -eq 0 ]; then
     echo "• Start chatting with AI models!"
     echo ""
     echo -e "${BOLD}💡 Useful Commands:${NC}"
-    echo "• View all services:      docker compose ps"
-    echo "• View service logs:      docker compose logs -f [service]"
+    echo "• View all services:      docker-compose ps"
+    echo "• View service logs:      docker-compose logs -f [service]"
     echo "• Stop all services:      ./scripts/stop.sh"
     echo "• Backup your data:       ./scripts/backup.sh"
     echo ""
@@ -204,9 +204,9 @@ else
     printf '  %s\n' "${failed_services[@]}"
     echo ""
     echo "🔍 Troubleshooting:"
-    echo "• Check logs: docker compose logs [service_name]"
+    echo "• Check logs: docker-compose logs [service_name]"
     echo "• Check system resources: docker stats"
-    echo "• Restart failed services: docker compose restart [service_name]"
+    echo "• Restart failed services: docker-compose restart [service_name]"
     echo "• Full restart: ./scripts/stop.sh && ./scripts/start.sh"
     echo ""
     exit 1

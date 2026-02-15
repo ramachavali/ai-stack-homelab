@@ -62,39 +62,39 @@ fi
 # Stop services gracefully or forcefully
 if [ "$FORCE_STOP" = true ]; then
     echo -e "${YELLOW}⚡ Force stopping all services...${NC}"
-    docker compose kill
+    docker-compose kill
 else
     echo -e "${BLUE}🔄 Gracefully stopping all services...${NC}"
     
     # Stop services in reverse dependency order
     echo -e "${BLUE}🔗 Stopping MCP services...${NC}"
-    docker compose stop mcpo n8n-mcp
+    docker-compose stop mcpo n8n-mcp
     
     echo -e "${BLUE}🌐 Stopping Open WebUI...${NC}"
-docker compose stop open-webui
+docker-compose stop open-webui
     
     echo -e "${BLUE}🎯 Stopping LiteLLM...${NC}"
-    docker compose stop litellm
+    docker-compose stop litellm
     
     echo -e "${BLUE}🔄 Stopping n8n...${NC}"
-    docker compose stop n8n
+    docker-compose stop n8n
     
     echo -e "${BLUE}🤖 Stopping Ollama...${NC}"
-    docker compose stop ollama
+    docker-compose stop ollama
     
     echo -e "${BLUE}🔴 Stopping Redis...${NC}"
-    docker compose stop redis
+    docker-compose stop redis
     
     echo -e "${BLUE}🐘 Stopping PostgreSQL...${NC}"
-    docker compose stop postgres
+    docker-compose stop postgres
 fi
 
 echo -e "${BLUE}🧹 Removing containers...${NC}"
-docker compose down
+docker-compose down
 
 if [ "$REMOVE_VOLUMES" = true ]; then
     echo -e "${RED}🗑️  Removing volumes...${NC}"
-    docker compose down -v
+    docker-compose down -v
     echo -e "${RED}💀 All data has been removed!${NC}"
 fi
 
@@ -114,6 +114,6 @@ fi
 
 echo ""
 echo "Other useful commands:"
-echo "  docker compose ps              # Check service status"
-echo "  docker compose logs [service]  # View service logs"
+echo "  docker-compose ps              # Check service status"
+echo "  docker-compose logs [service]  # View service logs"
 echo "  docker system df               # Check Docker disk usage"

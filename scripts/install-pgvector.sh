@@ -12,7 +12,7 @@ echo -e "${BLUE}🔧 pgvector Installation Script${NC}"
 echo "=================================="
 
 # Check if PostgreSQL is running
-if ! docker compose ps postgres | grep -q "Up"; then
+if ! docker-compose ps postgres | grep -q "Up"; then
     echo -e "${RED}❌ PostgreSQL is not running. Please start it first with: ./scripts/start.sh${NC}"
     exit 1
 fi
@@ -50,7 +50,7 @@ fi
 
 # Restart PostgreSQL to load the new extension
 echo -e "${BLUE}🔄 Restarting PostgreSQL to load pgvector...${NC}"
-docker compose restart postgres
+docker-compose restart postgres
 
 # Wait for PostgreSQL to be ready
 echo -e "${BLUE}⏳ Waiting for PostgreSQL to be ready...${NC}"

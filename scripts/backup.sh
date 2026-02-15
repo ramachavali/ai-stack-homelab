@@ -91,7 +91,7 @@ encrypt_file() {
 check_services() {
     echo -e "🔍 Checking service status..."
     
-    if ! docker compose ps --services --filter "status=running" | grep -q postgres; then
+    if ! docker-compose ps --services --filter "status=running" | grep -q postgres; then
         echo -e "⚠️ PostgreSQL is not running. Some backups may be incomplete."
     else
         echo -e "✅ PostgreSQL is running"

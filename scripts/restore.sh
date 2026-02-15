@@ -147,7 +147,7 @@ restore_postgres() {
     fi
     
     # Ensure PostgreSQL is running
-    docker compose up -d postgres
+    docker-compose up -d postgres
     sleep 10
     
     # Restore main database
@@ -291,7 +291,7 @@ if [ "$DRY_RUN" = false ]; then
     
     # Stop services before restore
     echo -e "🛑 Stopping AI Stack services..."
-    docker compose down
+    docker-compose down
 fi
 
 # Perform restore based on type
