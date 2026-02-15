@@ -4,20 +4,24 @@
 # AI Stack Stop Script
 # =================================================================
 
-set -e
+set -o errexit
+set -o nounset
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+#set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-echo -e "${BLUE}🛑 Stopping AI Stack...${NC}"
+# Load environment variables
+if [ -f ./.rendered.env ]; then
+    source ./.rendered.env
+else
+    echo -e "❌ .env file not found"
+    exit 1
+fi
+
+echo -e "🛑 Stopping AI Stack..."
 echo "======================"
 
 # Parse command line arguments
@@ -61,54 +65,54 @@ fi
 
 # Stop services gracefully or forcefully
 if [ "$FORCE_STOP" = true ]; then
-    echo -e "${YELLOW}⚡ Force stopping all services...${NC}"
+    echo -e "⚡ Force stopping all services..."
     docker-compose kill
 else
-    echo -e "${BLUE}🔄 Gracefully stopping all services...${NC}"
+    echo -e "🔄 Gracefully stopping all services..."
     
     # Stop services in reverse dependency order
-    echo -e "${BLUE}🔗 Stopping MCP services...${NC}"
+    echo -e "🔗 Stopping MCP services..."
     docker-compose stop mcpo n8n-mcp
     
-    echo -e "${BLUE}🌐 Stopping Open WebUI...${NC}"
+    echo -e "🌐 Stopping Open WebUI..."
 docker-compose stop open-webui
     
-    echo -e "${BLUE}🎯 Stopping LiteLLM...${NC}"
+    echo -e "🎯 Stopping LiteLLM..."
     docker-compose stop litellm
     
-    echo -e "${BLUE}🔄 Stopping n8n...${NC}"
+    echo -e "🔄 Stopping n8n..."
     docker-compose stop n8n
     
-    echo -e "${BLUE}🤖 Stopping Ollama...${NC}"
+    echo -e "🤖 Stopping Ollama..."
     docker-compose stop ollama
     
-    echo -e "${BLUE}🔴 Stopping Redis...${NC}"
+    echo -e "🔴 Stopping Redis..."
     docker-compose stop redis
     
-    echo -e "${BLUE}🐘 Stopping PostgreSQL...${NC}"
+    echo -e "🐘 Stopping PostgreSQL..."
     docker-compose stop postgres
 fi
 
-echo -e "${BLUE}🧹 Removing containers...${NC}"
+echo -e "🧹 Removing containers..."
 docker-compose down
 
 if [ "$REMOVE_VOLUMES" = true ]; then
-    echo -e "${RED}🗑️  Removing volumes...${NC}"
+    echo -e "🗑️  Removing volumes..."
     docker-compose down -v
-    echo -e "${RED}💀 All data has been removed!${NC}"
+    echo -e "💀 All data has been removed!"
 fi
 
 # Clean up unused resources
-echo -e "${BLUE}🧽 Cleaning up unused Docker resources...${NC}"
+echo -e "🧽 Cleaning up unused Docker resources..."
 docker system prune -f
 
 # Show final status
 echo ""
 if [ "$REMOVE_VOLUMES" = true ]; then
-    echo -e "${GREEN}🏁 AI Stack stopped and all data removed${NC}"
+    echo -e "🏁 AI Stack stopped and all data removed"
     echo "To start fresh, run: ./scripts/setup.sh"
 else
-    echo -e "${GREEN}🏁 AI Stack stopped successfully${NC}"
+    echo -e "🏁 AI Stack stopped successfully"
     echo "Data is preserved. To restart, run: ./scripts/start.sh"
 fi
 

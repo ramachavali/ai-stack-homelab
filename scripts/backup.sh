@@ -22,6 +22,11 @@ else
     exit 1
 fi
 
+
+echo -e "💾 AI Stack Backup Utility"
+echo "============================"
+echo ""
+
 # Configuration
 BACKUP_DIR="${BACKUP_LOCATION:-$HOME/Documents/ai-stack-backups}"
 DATE=$(date +%Y%m%d_%H%M%S)
@@ -29,10 +34,6 @@ ENCRYPT="${BACKUP_ENCRYPT:-true}"
 ENCRYPTION_KEY="${BACKUP_ENCRYPTION_KEY:-}"
 RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-30}"
 POSTGRES_ADDITIONAL_DBS="${POSTGRES_ADDITIONAL_DBS:-}"
-
-echo -e "💾 AI Stack Backup Utility"
-echo "============================"
-echo ""
 
 # Parse command line arguments
 BACKUP_TYPE="full"

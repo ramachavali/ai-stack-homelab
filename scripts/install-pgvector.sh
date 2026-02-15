@@ -1,11 +1,18 @@
 #!/bin/bash
+
+# =================================================================
+# AI Stack pgvector Installation Script
+# Simple, comprehensive installation for pgvector extension
+# =================================================================
+
 set -o errexit
 set -o nounset
 
 #set -x
 
-echo -e "🔧 pgvector Installation Script"
-echo "=================================="
+# Project root directory
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 # Load environment variables
 if [ -f ./.rendered.env ]; then
@@ -14,6 +21,10 @@ else
     echo -e "❌ .env file not found"
     exit 1
 fi
+
+
+echo -e "🔧 pgvector Installation Script"
+echo "=================================="
 
 # Check if PostgreSQL is running
 if ! docker-compose ps postgresql | grep -q "Up"; then
