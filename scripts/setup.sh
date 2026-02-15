@@ -71,7 +71,7 @@ setup_environment() {
     
 if [ ! -f .env ]; then
     echo -e "Copying and sourcing .env from template..."
-    cp .env.example ../.env
+    cp scripts/.env.example ./.env
     source ./.env > /dev/null 2>&1 || {
         echo -e "✗ Failed to load .env file"
         exit 1
