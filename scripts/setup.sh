@@ -8,7 +8,7 @@
 set -o errexit
 set -o nounset
 
-set -x
+#set -x
 
 # Project root directory
 if [ "${BASH_SOURCE-}" ]; then
@@ -65,52 +65,64 @@ check_prerequisites() {
     echo ""
 }
 
+render_env() {
+        local filePath="${1:-.env}"
+
+        if [ ! -f "$filePath" ]; then
+            echo "missing ${filePath}"
+            exit 1
+        fi
+
+        echo "Rendering ${filePath}"
+        local out="${PROJECT_ROOT}/.env"
+        local rendered_file="${PROJECT_ROOT}/.rendered.env"
+
+        : > "$out"
+        : > "$rendered_file"
+
+        while IFS= read -r LINE || [ -n "$LINE" ]; do
+            # Trim leading/trailing whitespace, normalize spaces around '=', remove CR
+            CLEANED_LINE=$(echo "${LINE}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/[[:space:]]*=[[:space:]]*/=/' | tr -d '\r')
+
+            if [[ "${CLEANED_LINE}" != "#"* ]] && [[ "${CLEANED_LINE}" == *"="* ]]; then
+                # Allow command substitution and variable expansion for values.
+                # Temporarily disable nounset to avoid abort on unset vars during expansion.
+                set +u
+                rendered=$(eval "echo \"${CLEANED_LINE}\"")
+                set -u
+
+                echo "$rendered" >> "$out"
+                echo "$rendered" >> "$rendered_file"
+                # Export into current shell so later lines can reference earlier values
+                export "${rendered}"
+            fi
+        done < "$filePath"
+}
+
 # Function to create environment file
 setup_environment() {
     print_section "⚙️ Setting Up Environment"
     
-if [ ! -f .env ]; then
-    echo -e "Copying and sourcing .env from template..."
-    cp scripts/.env.example ./.env
+    if [ ! -f "${PROJECT_ROOT}/.rendered.env" ]; then
+        echo -e "Copying and sourcing .env from template..."
 
-    read_env() {
-    local filePath="${1:-.env}"
-
-    if [ ! -f "$filePath" ]; then
-        echo "missing ${filePath}"
-        exit 1
+        render_env "${PROJECT_ROOT}/scripts/.unrendered.env" || {
+            echo -e "✗ Failed to load .env file"
+            exit 1
+        }
+        
+        source "${PROJECT_ROOT}/.env" > /dev/null 2>&1 || {
+            echo -e "✗ Failed to load .env file"
+            exit 1
+        }
+    else
+        echo -e "✓ .env file exists and validated"
     fi
 
-    echo "Reading $filePath"
-    while read -r LINE; do
-        # Remove leading and trailing whitespaces, and carriage return
-        CLEANED_LINE=$(echo "$LINE" | awk '{$1=$1};1' | tr -d '\r')
-
-        if [[ $CLEANED_LINE != '#'* ]] && [[ $CLEANED_LINE == *'='* ]]; then
-        export "$CLEANED_LINE" >> .env
-        export "$CLEANED_LINE" >> current_run.env
-
-        fi
-    done < "$filePath"
-    }
-
-    read_env scripts/.env.example || {
-        echo -e "✗ Failed to load .env file"
-        exit 1
-    }
-    
-    source ./.env > /dev/null 2>&1 || {
-        echo -e "✗ Failed to load .env file"
-        exit 1
-    }
-else
     env
-    env >> current_run.env
-    echo -e "✓ .env file exists and loaded"
-fi
-
-echo -e "✅ Environment variables validated"
-    echo ""
+    env >> "${PROJECT_ROOT}/current_run.env"
+    echo -e "✅ Environment variables loaded"
+        echo ""
 }
 
 # Function to create directory structure
