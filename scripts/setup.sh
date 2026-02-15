@@ -10,6 +10,8 @@ set -o nounset
 
 #set -x
 
+unset
+
 # Project root directory
 if [ "${BASH_SOURCE-}" ]; then
     SCRIPT_PATH="${BASH_SOURCE[0]}"
