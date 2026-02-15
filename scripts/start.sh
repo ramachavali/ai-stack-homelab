@@ -107,11 +107,11 @@ print_step "🚀 Starting Services"
 
 # 1. Start PostgreSQL
 print_step "  🐘 Starting PostgreSQL database..."
-docker-compose up -d postgres
-wait_for_service "PostgreSQL" "docker exec postgres pg_isready -h localhost -U $POSTGRES_USER -d $POSTGRES_DB" 60
+docker-compose up -d postgresql
+wait_for_service "PostgreSQL" "docker exec postgresql pg_isready -h localhost -U $POSTGRES_USER -d $POSTGRES_DB" 60
 
 # Check for pgvector extension
-if ! docker exec postgres psql -U $POSTGRES_USER -d $POSTGRES_DB -c "SELECT 1 FROM pg_extension WHERE extname = 'vector';" 2>/dev/null | grep -q "1"; then
+if ! docker exec postgresql psql -U $POSTGRES_USER -d $POSTGRES_DB -c "SELECT 1 FROM pg_extension WHERE extname = 'vector';" 2>/dev/null | grep -q "1"; then
     print_warning "pgvector extension not found"
     echo "  💡 You can install it later with: ./scripts/install-pgvector.sh"
 fi
@@ -159,7 +159,7 @@ sleep 15  # Give MCP servers time to initialize
 print_step "🏥 Final Health Check"
 sleep 5
 
-services=("postgres" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo")
+services=("postgresql" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo")
 failed_services=()
 
 for service in "${services[@]}"; do
