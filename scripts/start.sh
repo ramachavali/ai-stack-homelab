@@ -128,7 +128,7 @@ docker-compose up -d ollama
 
 # Check for AI models
 print_step "  🔍 Checking AI models..."
-docker exec ollama ollama list | grep -Fxq -- "$1" || {
+docker exec ollama ollama list | grep -Fxq -- "${1}" || {
     print_warning "No AI models found in Ollama"
     echo "  📥 You can pull models with: docker exec ollama ollama pull [model_name]"
 }

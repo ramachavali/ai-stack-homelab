@@ -104,8 +104,13 @@ safe_remove "configs/postgres/init/00-install-extensions.sql" "Outdated PostgreS
 
 # 7. Remove .env
 echo -e "🐘 Cleaning up environment files..."
-safe_remove "./.env" "./.rendered.env"
+safe_remove "./.env" 
+safe_remove "./.rendered.env"
+
+echo -e "🐘 Cleaning up docker files..."
+docker volume prune
 docker rmi $(docker images -a -q) 2>/dev/null || true
+docker system prune -a -f 2>/dev/null || true
 
 # 8. Optional: Remove VS Code workspace file
 echo ""
