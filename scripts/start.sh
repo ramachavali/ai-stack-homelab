@@ -124,21 +124,19 @@ wait_for_service "Redis" "docker exec redis redis-cli -a '$REDIS_PASSWORD' ping"
 # 3. Start Ollama
 print_step "  🤖 Starting Ollama AI server..."
 docker-compose up -d ollama
-wait_for_service "Ollama" "curl -f http://localhost:${OLLAMA_PORT:-11434}/api/tags" 90
+#wait_for_service "Ollama" "docker exec ollama ollama list " 25
 
 # Check for AI models
 print_step "  🔍 Checking AI models..."
-if ! docker exec ollama ollama list | grep -q "llama3.2"; then
-    print_warning "No Llama 3.2 models found"
-    echo "  📥 Downloading basic model (this may take 5-10 minutes)..."
-    docker exec ollama ollama pull llama3.2:1b
-    print_success "Basic model downloaded"
-fi
+docker exec ollama ollama list | grep -Fxq -- "$1" || {
+    print_warning "No AI models found in Ollama"
+    echo "  📥 You can pull models with: docker exec ollama ollama pull [model_name]"
+}
 
 # 4. Start n8n
 print_step "  🔄 Starting n8n workflow engine..."
 docker-compose up -d n8n
-wait_for_service "n8n" "curl -f http://localhost:${N8N_PORT:-5678}/healthz" 90
+#wait_for_service "n8n" "curl -f http://localhost:${N8N_PORT:-5678}/healthz" 90
 
 # 5. Start LiteLLM
 print_step "  🎯 Starting LiteLLM proxy..."
@@ -171,33 +169,33 @@ done
 echo ""
 
 if [ ${#failed_services[@]} -eq 0 ]; then
-    echo -e "${GREEN}${BOLD}🎉 AI Stack Started Successfully!${NC}"
+    echo -e "🎉 AI Stack Started Successfully!"
     echo "=================================="
     echo ""
-    echo -e "${BOLD}🌟 Your AI services are ready:${NC}"
+    echo -e "🌟 Your AI services are ready"
     echo ""
-    echo -e "${BLUE}📊 n8n Workflows:${NC}      http://localhost:${N8N_PORT:-5678}"
-    echo -e "${BLUE}🤖 Open WebUI:${NC}         http://localhost:${OPEN_WEBUI_PORT:-8080}"
-    echo -e "${BLUE}🎯 LiteLLM Proxy:${NC}      http://localhost:${LITELLM_PORT:-4000}"
-    echo -e "${BLUE}🔗 MCP Orchestrator:${NC}   http://localhost:${MCPO_PORT:-8000}"
+    echo -e "📊 n8n Workflows:      http://localhost:${N8N_PORT:-5678}"
+    echo -e "🤖 Open WebUI:         http://localhost:${OPEN_WEBUI_PORT:-8080}"
+    echo -e "🎯 LiteLLM Proxy:      http://localhost:${LITELLM_PORT:-4000}"
+    echo -e "🔗 MCP Orchestrator:   http://localhost:${MCPO_PORT:-8000}"
     echo ""
-    echo -e "${BOLD}🏁 First Time Setup:${NC}"
+    echo -e "🏁 First Time Setup:"
     echo "• Create your account in n8n (first user becomes owner)"
     echo "• Create your account in Open WebUI (first user becomes admin)"
     echo "• Start chatting with AI models!"
     echo ""
-    echo -e "${BOLD}💡 Useful Commands:${NC}"
+    echo -e "💡 Useful Commands:"
     echo "• View all services:      docker-compose ps"
     echo "• View service logs:      docker-compose logs -f [service]"
     echo "• Stop all services:      ./scripts/stop.sh"
     echo "• Backup your data:       ./scripts/backup.sh"
     echo ""
-    echo -e "${BOLD}🤖 Available AI Models:${NC}"
+    echo -e "🤖 Available AI Models"
     echo "• llama3.2:1b (lightweight, fast)"
     echo "• llama3.2:3b (balanced performance)"
     echo "• nomic-embed-text (for embeddings)"
     echo ""
-    echo -e "${GREEN}Enjoy your personal AI stack! 🚀${NC}"
+    echo -e "Enjoy your personal AI stack! 🚀$"
     
 else
     print_error "Some services failed to start:"

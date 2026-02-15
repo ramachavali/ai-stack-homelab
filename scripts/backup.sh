@@ -68,7 +68,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo -e "${RED}Unknown option: $1${NC}"
+            echo -e "Unknown option: $1"
             exit 1
             ;;
     esac
@@ -137,17 +137,17 @@ backup_postgres() {
                     encrypt_file "$BACKUP_DIR/postgres_${db}_${DATE}.sql"
                 fi
             else
-                echo -e "${YELLOW}    ⚠️ Database $db not found, skipping${NC}"
+                echo -e "    ⚠️ Database $db not found, skipping"
             fi
         done
     fi
     
-    echo -e "${GREEN}✅ PostgreSQL backup completed${NC}"
+    echo -e "✅ PostgreSQL backup completed"
 }
 
 # Function to backup Docker volumes
 backup_volumes() {
-    echo -e "${BLUE}💾 Backing up Docker volumes...${NC}"
+    echo -e "💾 Backing up Docker volumes..."
     
     volumes=("n8n_data" "ollama_data" "open-webui_data" "redis_data" "litellm_data" "mcp_data")
     
@@ -168,16 +168,16 @@ backup_volumes() {
                 encrypt_file "$BACKUP_DIR/${volume}_${DATE}.tar"
             fi
         else
-            echo -e "${YELLOW}    ⚠️ Volume $volume not found, skipping${NC}"
+            echo -e "    ⚠️ Volume $volume not found, skipping"
         fi
     done
     
-    echo -e "${GREEN}✅ Volume backup completed${NC}"
+    echo -e "✅ Volume backup completed"
 }
 
 # Function to backup configuration files
 backup_configs() {
-    echo -e "${BLUE}⚙️ Backing up configuration files...${NC}"
+    echo -e "⚙️ Backing up configuration files..."
     
     if [ -d configs ]; then
         echo "  📋 Backing up configs directory..."
@@ -195,13 +195,13 @@ backup_configs() {
     cp docker-compose.yml "$BACKUP_DIR/docker-compose_${DATE}.yml"
     encrypt_file "$BACKUP_DIR/docker-compose_${DATE}.yml"
     
-    echo -e "${GREEN}✅ Configuration backup completed${NC}"
+    echo -e "✅ Configuration backup completed"
 }
 
 # Function to backup specific service
 backup_service() {
     local service="$1"
-    echo -e "${BLUE}🎯 Backing up service: $service${NC}"
+    echo -e "🎯 Backing up service: $service"
     
     case "$service" in
         postgres)
@@ -228,13 +228,13 @@ backup_service() {
                         alpine tar cf "/backup/${volume_name}_${DATE}.tar" -C /data .
                     encrypt_file "$BACKUP_DIR/${volume_name}_${DATE}.tar"
                 fi
-                echo -e "${GREEN}✅ $service backup completed${NC}"
+                echo -e "✅ $service backup completed"
             else
-                echo -e "${YELLOW}⚠️ Volume for $service not found${NC}"
+                echo -e "⚠️ Volume for $service not found"
             fi
             ;;
         *)
-            echo -e "${RED}❌ Unknown service: $service${NC}"
+            echo -e "❌ Unknown service: $service"
             exit 1
             ;;
     esac
@@ -242,7 +242,7 @@ backup_service() {
 
 # Function to create backup manifest
 create_manifest() {
-    echo -e "${BLUE}📋 Creating backup manifest...${NC}"
+    echo -e "📋 Creating backup manifest..."
     
     manifest_file="$BACKUP_DIR/backup_manifest_${DATE}.json"
     
@@ -259,12 +259,12 @@ create_manifest() {
 }
 EOF
     
-    echo -e "${GREEN}✅ Backup manifest created${NC}"
+    echo -e "✅ Backup manifest created"
 }
 
 # Function to cleanup old backups
 cleanup_old_backups() {
-    echo -e "${BLUE}🧹 Cleaning up old backups...${NC}"
+    echo -e "🧹 Cleaning up old backups..."
     
     if [ "$RETENTION_DAYS" -gt 0 ]; then
         echo "  🗑️ Removing backups older than $RETENTION_DAYS days..."
@@ -273,7 +273,7 @@ cleanup_old_backups() {
         find "$BACKUP_DIR" -type f -mtime +"$RETENTION_DAYS" -name "*.sql" -delete 2>/dev/null || true
         find "$BACKUP_DIR" -type f -mtime +"$RETENTION_DAYS" -name "*.enc" -delete 2>/dev/null || true
         find "$BACKUP_DIR" -type f -mtime +"$RETENTION_DAYS" -name "backup_manifest_*.json" -delete 2>/dev/null || true
-        echo -e "${GREEN}✅ Cleanup completed${NC}"
+        echo -e "✅ Cleanup completed"
     else
         echo "  ℹ️ Cleanup disabled (retention set to 0)"
     fi
@@ -282,7 +282,7 @@ cleanup_old_backups() {
 # Function to show backup summary
 show_summary() {
     echo ""
-    echo -e "${GREEN}${BOLD}🎉 Backup Completed Successfully!${NC}"
+    echo -e "🎉 Backup Completed Successfully!"
     echo "=================================="
     echo "📅 Date: $DATE"
     echo "🗂️ Type: $BACKUP_TYPE"
@@ -302,7 +302,7 @@ show_summary() {
     done
     
     echo ""
-    echo -e "${BLUE}💡 To restore this backup:${NC}"
+    echo -e "💡 To restore this backup:"
     echo "  ./scripts/restore.sh --date $DATE"
     echo ""
 }
@@ -312,7 +312,7 @@ main() {
     check_services
     setup_backup_dir
     
-    echo -e "${BLUE}🔄 Starting $BACKUP_TYPE backup...${NC}"
+    echo -e "🔄 Starting $BACKUP_TYPE backup..."
     echo ""
     
     case "$BACKUP_TYPE" in
@@ -337,7 +337,7 @@ main() {
             backup_configs
             ;;
         *)
-            echo -e "${RED}❌ Unknown backup type: $BACKUP_TYPE${NC}"
+            echo -e "❌ Unknown backup type: $BACKUP_TYPE"
             echo "Available types: full, data, config"
             exit 1
             ;;
@@ -350,7 +350,7 @@ main() {
 
 # Check if backup is enabled
 if [ "$BACKUP_ENABLED" != "true" ]; then
-    echo -e "${YELLOW}⚠️ Backup is disabled in configuration${NC}"
+    echo -e "⚠️ Backup is disabled in configuration"
     echo "To enable: Set BACKUP_ENABLED=true in .env file"
     exit 1
 fi
