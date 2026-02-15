@@ -8,7 +8,7 @@
 set -o errexit
 set -o nounset
 
-#set -x
+set -x
 
 # Project root directory
 if [ "${BASH_SOURCE-}" ]; then
@@ -114,15 +114,11 @@ setup_environment() {
         echo -e "✓ .env file exists and validated"
     fi
 
-    source "${PROJECT_ROOT}/.env" > /dev/null 2>&1 || {
-            echo -e "✗ Failed to load .env file"
-            exit 1
-        }
-
+    source "${PROJECT_ROOT}/.env" > /dev/null
+    
     env
     env >> "${PROJECT_ROOT}/current_run.env"
     echo -e "✅ Environment variables loaded"
-        echo ""
 }
 
 # Function to create directory structure
