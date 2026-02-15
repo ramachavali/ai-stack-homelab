@@ -47,7 +47,7 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./configs/postgres/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+      - ./configs/postgres/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - ai-stack
     healthcheck:
@@ -214,7 +214,7 @@ services:
       WEBUI_NAME: ${OPEN_WEBUI_NAME:-AI Network}
       OPEN_WEBUI_NAME: ${OPEN_WEBUI_NAME:-AI Network}
       WEBUI_SECRET_KEY: ${OPEN_WEBUI_SECRET_KEY}
-      ENABLE_SIGNUP: ${ENABLE_SIGNUP:-false}
+      ENABLE_SIGNUP: ${ENABLE_SIGNUP:-tre}
       DEFAULT_USER_ROLE: ${DEFAULT_USER_ROLE:-user}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-en-US}
       DEFAULT_MODELS: ${DEFAULT_MODELS}
@@ -293,7 +293,11 @@ services:
       - "traefik.http.routers.litellm.tls=true"
       - "traefik.http.services.litellm.loadbalancer.server.port=4000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://0.0.0.0:4000/health/liveliness"]
+      test: ["CMD-SHELL", "python -c \"import sys,urllib.request; \
+        u='http://0.0.0.0:4000/health/liveliness'; \
+        import urllib.error; \
+        try: r=urllib.request.urlopen(u,timeout=5); sys.exit(0 if 200 <= r.status < 500 else 1) \
+        except Exception: sys.exit(1)\""]
       interval: 30s
       timeout: 10s
       retries: 3
