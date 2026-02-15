@@ -141,7 +141,7 @@ docker-compose up -d n8n
 # 5. Start LiteLLM
 print_step "  🎯 Starting LiteLLM proxy..."
 docker-compose up -d litellm
-wait_for_service "LiteLLM" "curl -f http://localhost:${LITELLM_PORT:-4000}/health/liveliness" 60
+#wait_for_service "LiteLLM" "curl -f http://localhost:${LITELLM_PORT:-4000}/health/liveliness" 60
 
 # 6. Start Open WebUI
 print_step "  🌐 Starting Open WebUI..."
