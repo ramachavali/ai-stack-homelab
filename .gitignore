@@ -1,27 +1,55 @@
+*.terraform*
+.git
+.git*
+*.idea*
+*.tmp*
+*.DS_Store*
+*.tfstate*
+*.out
+*backup*
+*.log
+__pycache__
+
 # Environment files with secrets
-*.env
+.rendered.env
 .env
 .env.local
-.env.production
+.env.*.local
 
-# Data directories
-data/
-logs/
-backups/
+# Vault bootstrap artifacts
+secrets/
+vault-init.json
 
-# Temporary files
-*.tmp
-.tmp*
-*.log
+# SSL certificates
+certs/
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# IDE files
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
 # Docker overrides
 docker-compose.override.yml
 
-# Backup files
-*.backup
-*.sql.gz
+# Logs
+*.log
+
+# Temporary files
+.tmp*
+*.tmp
+.cache/
+
+# Workspace/editor files
+.DS_Store
+*.code-workspace
+.vscode/
+.idea/
+.claude/
+.clauderc
