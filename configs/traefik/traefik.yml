@@ -31,6 +31,15 @@ entryPoints:
             sans:
               - "*.local"
 
+  websecure-admin:
+    address: ":3002"
+    http:
+      tls:
+        domains:
+          - main: "local"
+            sans:
+              - "*.local"
+
 # Docker Provider
 providers:
   docker:
