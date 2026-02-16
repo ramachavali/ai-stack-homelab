@@ -89,7 +89,8 @@ services:
       - "traefik.http.routers.ollama.rule=Host(`ollama.local`)"
       - "traefik.http.routers.ollama.entrypoints=websecure"
       - "traefik.http.routers.ollama.tls=true"
-      - "traefik.http.routers.ollama.service=ollama"
+      # Optional: router.service auto-resolves for single-service containers
+      # - "traefik.http.routers.ollama.service=ollama"
       - "traefik.http.services.ollama.loadbalancer.server.port=11434"
     healthcheck:
       test: ["CMD-SHELL", "ollama list > /dev/null 2>&1 || exit 1"]
@@ -152,7 +153,8 @@ services:
       - "traefik.http.routers.n8n.rule=Host(`n8n.local`)"
       - "traefik.http.routers.n8n.entrypoints=websecure"
       - "traefik.http.routers.n8n.tls=true"
-      - "traefik.http.routers.n8n.service=n8n"
+      # Optional: router.service auto-resolves for single-service containers
+      # - "traefik.http.routers.n8n.service=n8n"
       - "traefik.http.services.n8n.loadbalancer.server.port=5678"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5678/healthz"]
@@ -219,7 +221,8 @@ services:
       - "traefik.http.routers.open-webui.rule=Host(`open-webui.local`)"
       - "traefik.http.routers.open-webui.entrypoints=websecure"
       - "traefik.http.routers.open-webui.tls=true"
-      - "traefik.http.routers.open-webui.service=open-webui"
+      # Optional: router.service auto-resolves for single-service containers
+      # - "traefik.http.routers.open-webui.service=open-webui"
       - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -273,7 +276,8 @@ services:
       - "traefik.http.routers.litellm.rule=Host(`litellm.local`)"
       - "traefik.http.routers.litellm.entrypoints=websecure"
       - "traefik.http.routers.litellm.tls=true"
-      - "traefik.http.routers.litellm.service=litellm"
+      # Optional: router.service auto-resolves for single-service containers
+      # - "traefik.http.routers.litellm.service=litellm"
       - "traefik.http.services.litellm.loadbalancer.server.port=4000"
     healthcheck:
       test: ["CMD-SHELL", "python /opt/healthcheck_litellm.py --url http://127.0.0.1:4000/health/liveliness --timeout 5 --ok-range 200:499"]
@@ -364,7 +368,8 @@ services:
       - "traefik.http.routers.mcpo.rule=Host(`mcpo.local`)"
       - "traefik.http.routers.mcpo.entrypoints=websecure"
       - "traefik.http.routers.mcpo.tls=true"
-      - "traefik.http.routers.mcpo.service=mcpo"
+      # Optional: router.service auto-resolves for single-service containers
+      # - "traefik.http.routers.mcpo.service=mcpo"
       - "traefik.http.services.mcpo.loadbalancer.server.port=8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
@@ -413,7 +418,8 @@ services:
       - "traefik.http.routers.aiportal.rule=Host(`portal.local`)"
       - "traefik.http.routers.aiportal.entrypoints=websecure"
       - "traefik.http.routers.aiportal.tls=true"
-      - "traefik.http.routers.aiportal.service=aiportal"
+      # Optional: router.service auto-resolves for single-service containers
+      # - "traefik.http.routers.aiportal.service=aiportal"
       - "traefik.http.services.aiportal.loadbalancer.server.port=5000"
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5000/health\")'"]
@@ -444,7 +450,8 @@ services:
       - "traefik.http.routers.searxng.rule=Host(`searxng.local`)"
       - "traefik.http.routers.searxng.entrypoints=websecure"
       - "traefik.http.routers.searxng.tls=true"
-      - "traefik.http.routers.searxng.service=searxng"
+      # Optional: router.service auto-resolves for single-service containers
+      # - "traefik.http.routers.searxng.service=searxng"
       - "traefik.http.services.searxng.loadbalancer.server.port=8080"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/healthz"]
