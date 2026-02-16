@@ -1,37 +1,7 @@
 name: ai-stack
 
 services:
-  # Traefik Reverse Proxy
-  traefik:
-    image: traefik:latest
-    container_name: traefik
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8090:8080"  # Dashboard
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./configs/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./configs/traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - traefik_certs:/certs
-      - traefik_logs:/var/log/traefik
-    networks:
-      - ai-stack
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.local`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.tls=true"
-    healthcheck:
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+  # Traefik is hosted in coreservices-homelab and reaches routed services via `core-network`.
 
   # PostgreSQL Database with pgvector
   postgresql:
@@ -112,6 +82,7 @@ services:
       - ollama_data:/root/.ollama
     networks:
       - ai-stack
+      - core-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.ollama.rule=Host(`ollama.local`)"
@@ -172,6 +143,7 @@ services:
       - ${HOST_DOCSTORE_PATH}:/home/node/docstore:rw
     networks:
       - ai-stack
+      - core-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.n8n.rule=Host(`n8n.local`)"
@@ -234,6 +206,7 @@ services:
       - ${HOST_DOCSTORE_PATH}:/mnt/host/docstore:rw
     networks:
       - ai-stack
+      - core-network
     ports:
       - "8080:8080"
     labels:
@@ -287,6 +260,7 @@ services:
       - ./scripts/healthcheck_litellm.py:/opt/healthcheck_litellm.py:ro
     networks:
       - ai-stack
+      - core-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.litellm.rule=Host(`litellm.local`)"
@@ -375,6 +349,7 @@ services:
       - /app/config
     networks:
       - ai-stack
+      - core-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mcpo.rule=Host(`mcpo.local`)"
@@ -408,6 +383,7 @@ services:
       - searxng_data:/etc/searxng
     networks:
       - ai-stack
+      - core-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.searxng.rule=Host(`searxng.local`)"
@@ -434,6 +410,10 @@ networks:
     driver: bridge
     name: ai-stack
 
+  core-network:
+    external: true
+    name: core-network
+
 volumes:
   postgres_data:
     name: postgres_data
@@ -449,9 +429,5 @@ volumes:
     name: litellm_data
   mcp_data:
     name: mcp_data
-  traefik_certs:
-    name: traefik_certs
-  traefik_logs:
-    name: traefik_logs
   searxng_data:
     name: searxng_data

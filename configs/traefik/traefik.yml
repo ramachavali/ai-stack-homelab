@@ -36,7 +36,7 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false  # Only expose services with traefik.enable=true
-    network: "ai-stack"
+    network: "core-network"
 
 # Logging
 log:

@@ -71,7 +71,6 @@ docker compose ps
 **Example**:
 ```
 NAME          STATUS                    PORTS
-traefik       Up (healthy)             0.0.0.0:80->80/tcp, ...
 postgresql    Up (healthy)
 redis         Up (healthy)
 ollama        Up (healthy)
@@ -271,7 +270,7 @@ docker compose logs litellm | grep -i "database"
 
 **1. Dashboard access**:
 - Navigate to https://traefik.local
-- **Expected**: Traefik dashboard showing all routers
+- **Expected**: Traefik dashboard showing all routers (Traefik runs in `coreservices-homelab`)
 
 **2. Verify all routes**:
 Check dashboard shows routers for:
@@ -288,6 +287,12 @@ openssl s_client -connect open-webui.local:443 -showcerts < /dev/null 2>/dev/nul
 ```
 
 **Expected**: Certificate details (self-signed is OK).
+
+**4. Core-service health check**:
+```bash
+cd ../coreservices-homelab
+docker-compose ps traefik
+```
 
 ### Redis Cache
 

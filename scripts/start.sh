@@ -72,6 +72,16 @@ if ! docker info > /dev/null 2>&1; then
 fi
 print_success "Docker is running"
 
+# Check required external core network (provided by coreservices-homelab Traefik stack)
+if ! docker network inspect core-network > /dev/null 2>&1; then
+    print_error "Required Docker network 'core-network' was not found"
+    echo ""
+    echo "Start core services first:"
+    echo "  cd ../coreservices-homelab && ./scripts/start.sh"
+    exit 1
+fi
+print_success "External network 'core-network' is available"
+
 # Check if current_run.env file exists
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env
@@ -153,16 +163,11 @@ print_step "  🔗 Starting MCP servers..."
 docker-compose up -d n8n-mcp mcpo
 sleep 15  # Give MCP servers time to initialize
 
-# 7. Start Traefik servers
-print_step "  🔗 Starting Traefik servers..."
-docker-compose up -d traefik
-sleep 15  # Give Traefik servers time to initialize
-
 # Final health check
 print_step "🏥 Final Health Check"
 sleep 5
 
-services=("postgresql" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo" "traefik")
+services=("postgresql" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo")
 failed_services=()
 
 for service in "${services[@]}"; do

@@ -92,8 +92,6 @@ else
     echo -e "🐘 Stopping PostgreSQL..."
     docker-compose stop postgresql
 
-    echo -e "🌐 Stopping Traefik..."
-    docker-compose stop traefik
 fi
 
 echo -e "🧹 Removing containers..."

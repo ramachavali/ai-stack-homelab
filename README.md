@@ -78,7 +78,7 @@ Once running, access services at:
 | **n8n** | https://n8n.local | Workflow automation |
 | **LiteLLM** | https://litellm.local | AI proxy management |
 | **SearXNG** | https://searxng.local | Web search engine |
-| **Traefik** | https://traefik.local | Reverse proxy dashboard |
+| **Traefik** | https://traefik.local | Reverse proxy dashboard (served by `coreservices-homelab`) |
 | **Ollama** | https://ollama.local | AI model API |
 | **MCPO** | https://mcpo.local | MCP orchestrator |
 
@@ -317,9 +317,10 @@ docker compose up -d
 cat /etc/hosts | grep local
 ```
 
-**Check Traefik is running:**
+**Check Traefik is running (from core services):**
 ```bash
-docker compose ps traefik
+cd ../coreservices-homelab
+docker-compose ps traefik
 ```
 
 **Test direct access (bypass Traefik):**
