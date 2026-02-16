@@ -368,6 +368,48 @@ services:
           cpus: '${MCPO_CPU_LIMIT:-0.25}'
           memory: ${MCPO_MEMORY_LIMIT:-256M}
 
+  # AI + Core Portal Frontend (Flask)
+  ai-portal:
+    build: ./services
+    container_name: ai-portal
+    restart: unless-stopped
+    depends_on:
+      open-webui:
+        condition: service_started
+      n8n:
+        condition: service_started
+      litellm:
+        condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PORTAL_TITLE: ${PORTAL_TITLE:-AI + Core Services Portal}
+      OPEN_WEBUI_URL: ${OPEN_WEBUI_URL:-https://open-webui.local}
+      N8N_URL: ${N8N_URL:-https://n8n.local}
+      LITELLM_URL: ${LITELLM_URL:-https://litellm.local}
+      SEARXNG_URL: ${SEARXNG_URL:-https://searxng.local}
+      OLLAMA_URL: ${OLLAMA_URL:-https://ollama.local}
+      MCPO_URL: ${MCPO_URL:-https://mcpo.local}
+      CORE_FRONTEND_URL: ${CORE_FRONTEND_URL:-https://core.local}
+      TRAEFIK_UI_URL: ${TRAEFIK_UI_URL:-https://traefik.local}
+      LOGTO_UI_URL: ${LOGTO_UI_URL:-https://auth.local}
+      VAULT_UI_URL: ${VAULT_UI_URL:-http://localhost:8200/ui}
+    networks:
+      - ai-stack
+      - core-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ai-portal.rule=Host(`portal.local`)"
+      - "traefik.http.routers.ai-portal.entrypoints=websecure"
+      - "traefik.http.routers.ai-portal.tls=true"
+      - "traefik.http.services.ai-portal.loadbalancer.server.port=5000"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
   # SearXNG Web Search Engine
   searxng:
     image: searxng/searxng:${SEARXNG_VERSION:-latest}

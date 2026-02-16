@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }}</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; }
+      .container { max-width: 960px; margin: 48px auto; padding: 0 20px; }
+      h1 { margin-bottom: 8px; }
+      p.sub { margin-top: 0; color: #94a3b8; }
+      h2 { margin-top: 28px; margin-bottom: 10px; font-size: 20px; }
+      .grid { display: grid; gap: 14px; margin-top: 24px; }
+      @media (min-width: 860px) { .grid { grid-template-columns: 1fr 1fr; } }
+      .card { background: #111827; border: 1px solid #1f2937; border-radius: 10px; padding: 16px; }
+      .name { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+      .desc { color: #94a3b8; margin-bottom: 12px; }
+      a.btn { display: inline-block; text-decoration: none; color: #e2e8f0; background: #1d4ed8; border-radius: 8px; padding: 8px 12px; }
+      a.btn:hover { background: #2563eb; }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <h1>{{ title }}</h1>
+      <p class="sub">Simple frontend for quick access to AI services and core services.</p>
+
+      <h2>AI Services</h2>
+      <section class="grid">
+        {% for link in ai_links %}
+          <article class="card">
+            <div class="name">{{ link.name }}</div>
+            <div class="desc">{{ link.description }}</div>
+            <a class="btn" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">Open {{ link.name }}</a>
+          </article>
+        {% endfor %}
+      </section>
+
+      <h2>Core Services</h2>
+      <section class="grid">
+        {% for link in core_links %}
+          <article class="card">
+            <div class="name">{{ link.name }}</div>
+            <div class="desc">{{ link.description }}</div>
+            <a class="btn" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">Open {{ link.name }}</a>
+          </article>
+        {% endfor %}
+      </section>
+    </main>
+  </body>
+  </html>
