@@ -399,12 +399,13 @@ services:
       - core-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.ai-portal.rule=Host(`portal.local`)"
-      - "traefik.http.routers.ai-portal.entrypoints=websecure"
-      - "traefik.http.routers.ai-portal.tls=true"
-      - "traefik.http.services.ai-portal.loadbalancer.server.port=5000"
+      - "traefik.docker.network=core-network"
+      - "traefik.http.routers.aiportal.rule=Host(`portal.local`)"
+      - "traefik.http.routers.aiportal.entrypoints=websecure"
+      - "traefik.http.routers.aiportal.tls=true"
+      - "traefik.http.services.aiportal.loadbalancer.server.port=5000"
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5000/health"]
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://127.0.0.1:5000/health\")'"]
       interval: 30s
       timeout: 10s
       retries: 3
