@@ -10,8 +10,6 @@ set -o nounset
 
 #set -x
 
-unset
-
 # Project root directory
 if [ "${BASH_SOURCE-}" ]; then
     SCRIPT_PATH="${BASH_SOURCE[0]}"
@@ -38,13 +36,16 @@ print_section() {
 check_prerequisites() {
     print_section "📋 Checking Prerequisites"
     
-    # Check colima (for Docker on Apple Silicon)
-    if ! colima status > /dev/null 2>&1; then
-        echo -e "❌ Colima not available"
-        echo "Please install Colima for Docker on Apple Silicon"
+    # Accept either Colima or Docker Desktop / any running Docker daemon
+    if command -v colima > /dev/null 2>&1 && colima status > /dev/null 2>&1; then
+        echo -e "✅ Colima is available"
+    elif docker info > /dev/null 2>&1; then
+        echo -e "✅ Docker daemon is available"
+    else
+        echo -e "❌ No Docker runtime available"
+        echo "Start Docker Desktop or Colima and try again"
         exit 1
     fi
-    echo -e "✅ Colima is available"
 
 
     # Check Docker Compose version
@@ -116,9 +117,8 @@ setup_environment() {
         echo -e "✓ .env file exists and validated"
     fi
 
-    source "${PROJECT_ROOT}/.env" > /dev/null
+    source "${PROJECT_ROOT}/.rendered.env" > /dev/null
     
-    env
     echo -e "✅ Environment variables loaded"
 }
 
@@ -243,6 +243,14 @@ pull_images() {
 # Function to download AI models
 setup_models() {
     print_section "🤖 Setting Up AI Models"
+
+    docker_cpus="$(docker info --format '{{.NCPU}}' 2>/dev/null || echo "")"
+    if [ -n "$docker_cpus" ]; then
+        if awk "BEGIN {exit !(${OLLAMA_CPU_LIMIT:-0} > ${docker_cpus})}"; then
+            echo -e "⚠️ OLLAMA_CPU_LIMIT (${OLLAMA_CPU_LIMIT}) exceeds available Docker CPUs (${docker_cpus}); capping to ${docker_cpus}."
+            export OLLAMA_CPU_LIMIT="$docker_cpus"
+        fi
+    fi
     
     echo "Downloading Llama 3.2 models (this may take 10-20 minutes)..."
     echo ""

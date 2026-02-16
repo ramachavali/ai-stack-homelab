@@ -258,7 +258,7 @@ Your AI environment is ready!
 ./scripts/stop.sh
 
 # Check what's running
-docker compose ps
+docker-compose ps
 ```
 
 ### Backing Up Your Data
@@ -272,12 +272,12 @@ docker compose ps
 ### Viewing Logs (if something goes wrong)
 ```bash
 # See all service status
-docker compose ps
+docker-compose ps
 
 # View logs for specific service
-docker compose logs open-webui
-docker compose logs n8n
-docker compose logs ollama
+docker-compose logs open-webui
+docker-compose logs n8n
+docker-compose logs ollama
 ```
 
 ---
@@ -305,7 +305,7 @@ docker compose logs ollama
 - Make sure your Mac isn't running on battery power
 
 ### "Can't access web interfaces"
-1. Make sure services are running: `docker compose ps`
+1. Make sure services are running: `docker-compose ps`
 2. Try restarting your browser
 3. Check if something else is using those ports
 
@@ -368,7 +368,7 @@ If you lose your `.env` file:
 
 ### Updates
 - Periodically update your AI models: `docker exec ollama ollama pull llama3.2:3b`
-- Update Docker images: `docker compose pull && docker compose up -d`
+- Update Docker images: `docker-compose pull && docker-compose up -d`
 
 ---
 
@@ -388,9 +388,9 @@ You now have:
 ## 📞 Need Help?
 
 ### Check These First
-1. **Service Status**: `docker compose ps`
+1. **Service Status**: `docker-compose ps`
 2. **Resource Usage**: `docker stats`
-3. **Recent Logs**: `docker compose logs --tail=50`
+3. **Recent Logs**: `docker-compose logs --tail=50`
 4. **Disk Space**: `df -h`
 
 ### Common Commands Cheat Sheet
@@ -399,8 +399,8 @@ You now have:
 ./scripts/start.sh              # Start AI stack
 ./scripts/stop.sh               # Stop AI stack
 ./scripts/backup.sh             # Backup data
-docker compose ps               # Check status
-docker compose logs [service]   # View logs
+docker-compose ps               # Check status
+docker-compose logs [service]   # View logs
 
 # Troubleshooting
 ./scripts/stop.sh --force       # Force stop everything
@@ -408,7 +408,7 @@ docker system prune -f          # Clean up Docker
 ./scripts/setup.sh              # Re-run setup
 
 # Updates
-docker compose pull             # Download updates
+docker-compose pull             # Download updates
 docker exec ollama ollama pull llama3.2:3b  # Update AI model
 ```
 

@@ -11,7 +11,7 @@ Complete home lab AI environment featuring local AI models, workflow automation,
 - **LiteLLM** - Unified AI proxy for multiple providers
 - **SearXNG** - Privacy-respecting web search engine for RAG
 - **MCP Services** - Model Context Protocol integration (n8n-mcp, mcpo)
-- **Traefik** - Reverse proxy with automatic HTTPS
+- **Traefik (external)** - Reverse proxy served by `coreservices-homelab`
 - **Redis** - High-performance caching layer
 
 ## Quick Start
@@ -34,7 +34,7 @@ cd ai-stack
 
 **2. Run setup**
 ```bash
-./setup.sh
+./scripts/setup.sh
 ```
 
 The setup script will:
@@ -58,7 +58,7 @@ Add this line:
 
 **4. Start the stack**
 ```bash
-docker compose up -d
+./scripts/start.sh
 ```
 
 **5. Download AI models (runs in background)**
@@ -143,38 +143,38 @@ POSTGRES_MEMORY_LIMIT=4G
 
 ```bash
 # Start all services
-docker compose up -d
+docker-compose up -d
 
 # Stop all services
-docker compose stop
+docker-compose stop
 
 # Stop and remove containers (data persists)
-docker compose down
+docker-compose down
 
 # Stop and remove all data (DESTRUCTIVE)
-docker compose down -v
+docker-compose down -v
 ```
 
 ### Viewing Logs
 
 ```bash
 # All services
-docker compose logs -f
+docker-compose logs -f
 
 # Specific service
-docker compose logs -f open-webui
-docker compose logs -f ollama
-docker compose logs -f postgresql
+docker-compose logs -f open-webui
+docker-compose logs -f ollama
+docker-compose logs -f postgresql
 
 # Last 100 lines
-docker compose logs --tail=100
+docker-compose logs --tail=100
 ```
 
 ### Checking Service Status
 
 ```bash
 # Service health
-docker compose ps
+docker-compose ps
 
 # Resource usage
 docker stats
@@ -187,10 +187,10 @@ docker exec ollama ollama list
 
 ```bash
 # Restart specific service
-docker compose restart open-webui
+docker-compose restart open-webui
 
 # Restart after config changes
-docker compose up -d --force-recreate open-webui
+docker-compose up -d --force-recreate open-webui
 ```
 
 ## Open WebUI Features
@@ -300,14 +300,14 @@ docker info
 
 **Check logs:**
 ```bash
-docker compose logs [service-name]
+docker-compose logs [service-name]
 ```
 
 **Reset everything:**
 ```bash
-docker compose down
+docker-compose down
 docker system prune -f
-docker compose up -d
+docker-compose up -d
 ```
 
 ### Can't Access Services
@@ -333,13 +333,13 @@ curl http://localhost:5678  # n8n direct
 
 **Check PostgreSQL:**
 ```bash
-docker compose logs postgresql
-docker compose exec postgresql pg_isready
+docker-compose logs postgresql
+docker-compose exec postgresql pg_isready
 ```
 
 **Verify pgvector extension:**
 ```bash
-docker compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT * FROM pg_extension WHERE extname='vector';"
+docker-compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT * FROM pg_extension WHERE extname='vector';"
 ```
 
 ### Ollama Models Not Working
@@ -358,7 +358,7 @@ docker exec ollama ollama pull nomic-embed-text
 
 **Check Ollama logs:**
 ```bash
-docker compose logs -f ollama
+docker-compose logs -f ollama
 ```
 
 ### Out of Memory
@@ -389,7 +389,7 @@ ls -la "$HOME/Viridae Network"
 
 **Check container can access:**
 ```bash
-docker compose exec open-webui ls -la /mnt/host/
+docker-compose exec open-webui ls -la /mnt/host/
 ```
 
 **Update `.env` with correct username:**
@@ -399,7 +399,7 @@ HOST_DOWNLOADS_PATH=/Users/YOUR_ACTUAL_USERNAME/Downloads
 
 Then restart:
 ```bash
-docker compose up -d --force-recreate open-webui
+docker-compose up -d --force-recreate open-webui
 ```
 
 ## Security Considerations
@@ -436,10 +436,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
 ```bash
 # Pull latest images
-docker compose pull
+docker-compose pull
 
 # Recreate containers
-docker compose up -d --force-recreate
+docker-compose up -d --force-recreate
 
 # Clean old images
 docker image prune -f
@@ -458,7 +458,7 @@ docker exec ollama ollama pull qwen2.5:7b-instruct
 1. Edit `.env` with new values
 2. Restart affected services:
 ```bash
-docker compose up -d --force-recreate [service-name]
+docker-compose up -d --force-recreate [service-name]
 ```
 
 ## Architecture
@@ -511,27 +511,27 @@ All services already expose metrics endpoints for Prometheus scraping.
 
 **Check logs first:**
 ```bash
-docker compose logs -f [service-name]
+docker-compose logs -f [service-name]
 ```
 
 **Verify configuration:**
 ```bash
-docker compose config
+docker-compose config
 ```
 
 **Health check:**
 ```bash
-docker compose ps
+docker-compose ps
 curl -k https://open-webui.local/health
 curl -k https://n8n.local/healthz
 ```
 
 **Complete reset (nuclear option):**
 ```bash
-docker compose down -v
+docker-compose down -v
 rm -rf certs/
 ./setup.sh
-docker compose up -d
+docker-compose up -d
 ```
 
 ---

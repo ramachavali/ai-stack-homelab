@@ -18,7 +18,7 @@ cd "$PROJECT_ROOT"
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env
 else
-    echo -e "❌ .env file not found"
+    echo -e "❌ .rendered.env file not found"
     exit 1
 fi
 

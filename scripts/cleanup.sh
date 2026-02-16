@@ -14,12 +14,13 @@ set -o nounset
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-# Load environment variables
+# Load environment variables (optional for cleanup)
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env
+elif [ -f ./.env ]; then
+    source ./.env
 else
-    echo -e "❌ .env file not found"
-    exit 1
+    echo -e "⚠️  .rendered.env/.env not found; continuing cleanup without loaded env vars"
 fi
 
 echo -e "🧹 AI Stack Cleanup"
@@ -50,6 +51,9 @@ fi
 echo ""
 echo -e "🔹 Starting cleanup..."
 echo ""
+
+echo -e "🛑 Stopping AI stack before cleanup..."
+docker-compose down --remove-orphans || true
 
 # Function to safely remove file/directory
 safe_remove() {
@@ -108,13 +112,23 @@ safe_remove "./.env" "remove .env file"
 safe_remove "./.rendered.env" "remove .env file"
 
 echo -e "🐘 Cleaning up docker volumes..."
-docker volume rm $(docker volume ls |awk '{print $2}') 2>/dev/null || true
+for volume in postgres_data redis_data ollama_data n8n_data open_webui_data litellm_data mcp_data searxng_data; do
+    if docker volume inspect "$volume" >/dev/null 2>&1; then
+        if docker volume rm "$volume" >/dev/null 2>&1; then
+            echo -e "  ✅ Removed volume: $volume"
+        else
+            echo -e "  ⚠️  Skipped volume (in use): $volume"
+        fi
+    else
+        echo -e "  ℹ️  Volume not found: $volume"
+    fi
+done
 
 echo -e "🐘 Cleaning up docker images..."
-docker rmi $(docker images -a -q) 2>/dev/null || true
+docker image prune -f 2>/dev/null || true
 
 echo -e "🐘 Cleaning up docker prune..."
-docker system prune -a -f 2>/dev/null || true
+docker system prune -f 2>/dev/null || true
 
 # 8. Optional: Remove VS Code workspace file
 echo ""

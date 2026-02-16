@@ -17,7 +17,7 @@ cd "$PROJECT_ROOT"
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env
 else
-    echo -e "❌ .env file not found"
+    echo -e "❌ .rendered.env file not found"
     exit 1
 fi
 
@@ -47,14 +47,14 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo -e "${RED}Unknown option: $1${NC}"
+            echo -e "Unknown option: $1"
             exit 1
             ;;
     esac
 done
 
 if [ "$REMOVE_VOLUMES" = true ]; then
-    echo -e "${RED}⚠️  WARNING: You are about to remove all volumes and data!${NC}"
+    echo -e "⚠️  WARNING: You are about to remove all volumes and data!"
     echo "This action cannot be undone."
     read -p "Are you sure? Type 'yes' to continue: " confirm
     if [ "$confirm" != "yes" ]; then

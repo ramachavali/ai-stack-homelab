@@ -7,7 +7,7 @@ This document provides comprehensive testing procedures to validate your AI Stac
 ### 1. Configuration Syntax Validation
 
 ```bash
-docker compose config
+docker-compose config
 ```
 
 **Expected**: Clean YAML output with no errors or warnings.
@@ -45,17 +45,17 @@ ls -la configs/
 
 ```bash
 # Clean slate (if re-testing)
-docker compose down -v
+docker-compose down -v
 
 # Start all services
-docker compose up -d
+docker-compose up -d
 ```
 
 **Expected**: All containers start without errors.
 
 **Monitor startup**:
 ```bash
-docker compose logs -f
+docker-compose logs -f
 ```
 
 Look for initialization messages. Press Ctrl+C after 2-3 minutes.
@@ -63,7 +63,7 @@ Look for initialization messages. Press Ctrl+C after 2-3 minutes.
 ### 2. Service Health Check
 
 ```bash
-docker compose ps
+docker-compose ps
 ```
 
 **Expected output**: All services show either "healthy" or "running" status.
@@ -83,21 +83,21 @@ mcpo          Up (healthy)
 
 **If unhealthy**: Check specific service logs:
 ```bash
-docker compose logs [service-name]
+docker-compose logs [service-name]
 ```
 
 ### 3. Network Connectivity Test
 
 ```bash
 # Test inter-service communication
-docker compose exec open-webui curl -s http://ollama:11434/api/tags | head -n 5
+docker-compose exec open-webui curl -s http://ollama:11434/api/tags | head -n 5
 ```
 
 **Expected**: JSON response showing Ollama is reachable.
 
 ```bash
 # Test PostgreSQL connectivity
-docker compose exec postgresql pg_isready -U aistack
+docker-compose exec postgresql pg_isready -U aistack
 ```
 
 **Expected**: `accepting connections`
@@ -108,7 +108,7 @@ docker compose exec postgresql pg_isready -U aistack
 
 **1. Verify databases exist**:
 ```bash
-docker compose exec postgresql psql -U aistack -d aistack_db -c "\l"
+docker-compose exec postgresql psql -U aistack -d aistack_db -c "\l"
 ```
 
 **Expected databases**:
@@ -119,14 +119,14 @@ docker compose exec postgresql psql -U aistack -d aistack_db -c "\l"
 
 **2. Verify pgvector extension**:
 ```bash
-docker compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT * FROM pg_extension WHERE extname='vector';"
+docker-compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT * FROM pg_extension WHERE extname='vector';"
 ```
 
 **Expected**: One row showing vector extension installed.
 
 **3. Test vector operations**:
 ```bash
-docker compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT '[1,2,3]'::vector;"
+docker-compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT '[1,2,3]'::vector;"
 ```
 
 **Expected**: Returns the vector representation.
@@ -180,7 +180,7 @@ curl -k https://open-webui.local/health
 
 **2. Verify filesystem mounts**:
 ```bash
-docker compose exec open-webui ls -la /mnt/host/
+docker-compose exec open-webui ls -la /mnt/host/
 ```
 
 **Expected directories**:
@@ -191,14 +191,14 @@ docker compose exec open-webui ls -la /mnt/host/
 
 **3. Test write permissions**:
 ```bash
-docker compose exec open-webui touch /mnt/host/downloads/.test && \
-docker compose exec open-webui rm /mnt/host/downloads/.test && \
+docker-compose exec open-webui touch /mnt/host/downloads/.test && \
+docker-compose exec open-webui rm /mnt/host/downloads/.test && \
 echo "✓ Write permissions OK"
 ```
 
 **4. Verify database connection**:
 ```bash
-docker compose logs open-webui | grep -i "database\|postgres"
+docker-compose logs open-webui | grep -i "database\|postgres"
 ```
 
 **Expected**: Connection successful messages, no errors.
@@ -221,14 +221,14 @@ curl -k https://n8n.local/healthz
 
 **2. Verify database connection**:
 ```bash
-docker compose logs n8n | grep -i "database\|postgres"
+docker-compose logs n8n | grep -i "database\|postgres"
 ```
 
 **Expected**: Successful migration messages, no connection errors.
 
 **3. Check filesystem mounts**:
 ```bash
-docker compose exec n8n ls -la /home/node/
+docker-compose exec n8n ls -la /home/node/
 ```
 
 **Expected**:
@@ -254,7 +254,7 @@ curl -k https://litellm.local/health/liveliness
 
 **2. Database connection**:
 ```bash
-docker compose logs litellm | grep -i "database"
+docker-compose logs litellm | grep -i "database"
 ```
 
 **Expected**: Connection successful.
@@ -298,14 +298,14 @@ docker-compose ps traefik
 
 **1. Connection test**:
 ```bash
-docker compose exec redis redis-cli -a "${REDIS_PASSWORD}" ping
+docker-compose exec redis redis-cli -a "${REDIS_PASSWORD}" ping
 ```
 
 **Expected**: `PONG`
 
 **2. Memory check**:
 ```bash
-docker compose exec redis redis-cli -a "${REDIS_PASSWORD}" INFO memory | grep used_memory_human
+docker-compose exec redis redis-cli -a "${REDIS_PASSWORD}" INFO memory | grep used_memory_human
 ```
 
 **Expected**: Shows memory usage (should be low initially).
@@ -333,7 +333,7 @@ curl -k "https://searxng.local/search?q=test&format=json" | jq '.results | lengt
 
 **4. Verify Open WebUI integration**:
 ```bash
-docker compose exec open-webui env | grep -i search
+docker-compose exec open-webui env | grep -i search
 ```
 
 **Expected output**:
@@ -345,7 +345,7 @@ SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
 
 **5. Test internal connectivity**:
 ```bash
-docker compose exec open-webui curl -s "http://searxng:8080/search?q=docker&format=json" | head -c 100
+docker-compose exec open-webui curl -s "http://searxng:8080/search?q=docker&format=json" | head -c 100
 ```
 
 **Expected**: JSON response with search results.
@@ -461,7 +461,7 @@ time docker exec ollama ollama run llama3.2:3b "Hello"
 
 **Database query time**:
 ```bash
-time docker compose exec postgresql psql -U aistack -d aistack_db -c "SELECT 1;"
+time docker-compose exec postgresql psql -U aistack -d aistack_db -c "SELECT 1;"
 ```
 
 **Expected**: < 100ms
@@ -480,7 +480,7 @@ grep -i "password.*:" docker-compose.yml | grep -v "\${" && echo "⚠ Hardcoded 
 ### 2. Port Exposure Check
 
 ```bash
-docker compose ps --format json | jq '.[].Publishers' | grep "0.0.0.0"
+docker-compose ps --format json | jq '.[].Publishers' | grep "0.0.0.0"
 ```
 
 **Expected**: Only Traefik ports (80, 443, 8090) exposed to 0.0.0.0.
@@ -510,13 +510,13 @@ ls -la .env
 
 ```bash
 # Stop services
-docker compose stop
+docker-compose stop
 
 # Wait a few seconds
 sleep 5
 
 # Restart
-docker compose start
+docker-compose start
 ```
 
 **Expected**: All services come back healthy.
@@ -533,14 +533,14 @@ docker compose start
 
 **Database persistence**:
 ```bash
-docker compose exec postgresql psql -U aistack -d n8n_db -c "SELECT COUNT(*) FROM workflow;"
+docker-compose exec postgresql psql -U aistack -d n8n_db -c "SELECT COUNT(*) FROM workflow;"
 ```
 
 Note the count, restart, check again:
 ```bash
-docker compose restart postgresql
+docker-compose restart postgresql
 sleep 10
-docker compose exec postgresql psql -U aistack -d n8n_db -c "SELECT COUNT(*) FROM workflow;"
+docker-compose exec postgresql psql -U aistack -d n8n_db -c "SELECT COUNT(*) FROM workflow;"
 ```
 
 **Expected**: Same count (data persisted).
@@ -552,7 +552,7 @@ docker compose exec postgresql psql -U aistack -d n8n_db -c "SELECT COUNT(*) FRO
 docker exec ollama ollama list
 
 # Restart Ollama
-docker compose restart ollama
+docker-compose restart ollama
 sleep 30
 
 # Check models again
@@ -567,7 +567,7 @@ docker exec ollama ollama list
 
 **Check logs**:
 ```bash
-docker compose logs [service-name] --tail=50
+docker-compose logs [service-name] --tail=50
 ```
 
 **Common causes**:
@@ -594,7 +594,7 @@ ping -c 1 open-webui.local
 
 **Check Traefik**:
 ```bash
-docker compose ps traefik
+docker-compose ps traefik
 curl -k https://open-webui.local
 ```
 
@@ -619,7 +619,7 @@ docker exec ollama ollama pull llama3.2:3b
 
 **Check PostgreSQL is running**:
 ```bash
-docker compose exec postgresql pg_isready
+docker-compose exec postgresql pg_isready
 ```
 
 **Check credentials**:
@@ -630,14 +630,14 @@ grep POSTGRES .env
 
 **Check service can reach database**:
 ```bash
-docker compose exec open-webui nc -zv postgresql 5432
+docker-compose exec open-webui nc -zv postgresql 5432
 ```
 
 ## Testing Checklist
 
 Use this checklist to track testing progress:
 
-- [ ] docker compose config validates
+- [ ] docker-compose config validates
 - [ ] All environment variables configured
 - [ ] All services start successfully
 - [ ] All services reach healthy status within 5 minutes
@@ -679,13 +679,13 @@ After completing all tests, run this command to verify overall health:
 
 ```bash
 echo "=== Service Status ===" && \
-docker compose ps && \
+docker-compose ps && \
 echo -e "\n=== Resource Usage ===" && \
 docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}" && \
 echo -e "\n=== Ollama Models ===" && \
 docker exec ollama ollama list && \
 echo -e "\n=== Database Status ===" && \
-docker compose exec postgresql pg_isready && \
+docker-compose exec postgresql pg_isready && \
 echo -e "\n✓ All checks complete"
 ```
 

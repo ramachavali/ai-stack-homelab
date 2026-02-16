@@ -18,7 +18,7 @@ cd "$PROJECT_ROOT"
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env
 else
-    echo -e "❌ current_run.env file not found"
+    echo -e "❌ .rendered.env file not found"
     exit 1
 fi
 
@@ -55,7 +55,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --list|-l)
-            echo -e "${BLUE}📋 Available backups:"
+            echo -e "📋 Available backups:"
             echo "==================="
             if [ -d "$BACKUP_DIR" ]; then
                 find "$BACKUP_DIR" -name "backup_manifest_*.json" | sort -r | while read manifest; do
@@ -89,7 +89,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo -e "${RED}Unknown option: $1"
+            echo -e "Unknown option: $1"
             exit 1
             ;;
     esac
@@ -147,41 +147,44 @@ restore_postgres() {
     fi
     
     # Ensure PostgreSQL is running
-    docker-compose up -d postgres
+    docker-compose up -d postgresql
     sleep 10
     
     # Restore main database
     main_backup=$(decrypt_file "$BACKUP_DIR/postgres_main_${RESTORE_DATE}.sql.gz")
     if [ -n "$main_backup" ] && [ -f "$main_backup" ]; then
         echo -e "  📊 Restoring main database..."
-        zcat "$main_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+        zcat "$main_backup" | docker exec -i postgresql psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
         rm -f "$main_backup"
     fi
     
     # Restore n8n database
-    n8n_backup=$(decrypt_file "$BACKUP_DIR/postgres_n8n_${RESTORE_DATE}.sql.gz")
+    n8n_backup=$(decrypt_file "$BACKUP_DIR/postgres_n8n_db_${RESTORE_DATE}.sql.gz")
     if [ -n "$n8n_backup" ] && [ -f "$n8n_backup" ]; then
         echo -e "  🔄 Restoring n8n database..."
-        docker exec ai-postgresql createdb -U "$POSTGRES_USER" n8n_prod 2>/dev/null || true
-        zcat "$n8n_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "n8n_prod"
+        docker exec postgresql createdb -U "$POSTGRES_USER" n8n_db 2>/dev/null || true
+        zcat "$n8n_backup" | docker exec -i postgresql psql -U "$POSTGRES_USER" -d "n8n_db"
         rm -f "$n8n_backup"
     fi
     
     # Restore LiteLLM database
-    litellm_backup=$(decrypt_file "$BACKUP_DIR/postgres_litellm_${RESTORE_DATE}.sql.gz")
+    litellm_backup=$(decrypt_file "$BACKUP_DIR/postgres_litellm_db_${RESTORE_DATE}.sql.gz")
     if [ -n "$litellm_backup" ] && [ -f "$litellm_backup" ]; then
         echo -e "  🎯 Restoring LiteLLM database..."
-        docker exec ai-postgresql createdb -U "$POSTGRES_USER" litellm_prod 2>/dev/null || true
-        zcat "$litellm_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "litellm_prod"
+        docker exec postgresql createdb -U "$POSTGRES_USER" litellm_db 2>/dev/null || true
+        zcat "$litellm_backup" | docker exec -i postgresql psql -U "$POSTGRES_USER" -d "litellm_db"
         rm -f "$litellm_backup"
     fi
     
-    # Restore Open WebUI database
-    open_webui_backup=$(decrypt_file "$BACKUP_DIR/postgres_open_webui_${RESTORE_DATE}.sql.gz")
+    # Restore Open WebUI database (supports current and legacy backup naming)
+    open_webui_backup=$(decrypt_file "$BACKUP_DIR/postgres_openwebui_db_${RESTORE_DATE}.sql.gz")
+    if [ -z "$open_webui_backup" ] || [ ! -f "$open_webui_backup" ]; then
+        open_webui_backup=$(decrypt_file "$BACKUP_DIR/postgres_open_webui_${RESTORE_DATE}.sql.gz")
+    fi
     if [ -n "$open_webui_backup" ] && [ -f "$open_webui_backup" ]; then
         echo -e "  🌐 Restoring Open WebUI database..."
-        docker exec ai-postgresql createdb -U "$POSTGRES_USER" open_webui_db 2>/dev/null || true
-        zcat "$open_webui_backup" | docker exec -i ai-postgresql psql -U "$POSTGRES_USER" -d "open_webui_db"
+        docker exec postgresql createdb -U "$POSTGRES_USER" open_webui_db 2>/dev/null || true
+        zcat "$open_webui_backup" | docker exec -i postgresql psql -U "$POSTGRES_USER" -d "open_webui_db"
         rm -f "$open_webui_backup"
     fi
     
@@ -192,7 +195,7 @@ restore_postgres() {
 restore_volumes() {
     echo -e "💾 Restoring Docker volumes..."
     
-    volumes=("n8n_data" "ollama_data" "open-webui_data" "redis_data" "litellm_data" "mcp_data")
+    volumes=("postgres_data" "n8n_data" "ollama_data" "open_webui_data" "redis_data" "litellm_data" "mcp_data" "searxng_data")
     
     for volume in "${volumes[@]}"; do
         volume_backup=$(decrypt_file "$BACKUP_DIR/${volume}_${RESTORE_DATE}.tar.gz")
@@ -200,15 +203,15 @@ restore_volumes() {
             echo -e "  📁 Restoring ${volume}..."
             
             if [ "$DRY_RUN" = true ]; then
-                echo "    [DRY RUN] Would restore volume: ai-stack_${volume}"
+                echo "    [DRY RUN] Would restore volume: ${volume}"
             else
                 # Remove existing volume and recreate
-                docker volume rm "ai-stack_${volume}" 2>/dev/null || true
-                docker volume create "ai-stack_${volume}"
+                docker volume rm "${volume}" 2>/dev/null || true
+                docker volume create "${volume}"
                 
                 # Restore volume data
                 docker run --rm \
-                    -v "ai-stack_${volume}:/data" \
+                    -v "${volume}:/data" \
                     -v "$BACKUP_DIR":/backup \
                     alpine sh -c "cd /data && tar xzf /backup/$(basename "$volume_backup")"
             fi
@@ -250,19 +253,26 @@ restore_service() {
     echo -e "🎯 Restoring service: $service"
     
     case "$service" in
-        postgres)
+        postgres|postgresql)
             restore_postgres
             ;;
-        n8n|ollama|open-webui|redis|litellm|mcp)
-            volume_backup=$(decrypt_file "$BACKUP_DIR/${service}_data_${RESTORE_DATE}.tar.gz")
+        n8n|ollama|open-webui|redis|litellm|mcp|postgresql|searxng)
+            volume_name="${service}_data"
+            if [ "$service" = "open-webui" ]; then
+                volume_name="open_webui_data"
+            elif [ "$service" = "postgresql" ]; then
+                volume_name="postgres_data"
+            fi
+
+            volume_backup=$(decrypt_file "$BACKUP_DIR/${volume_name}_${RESTORE_DATE}.tar.gz")
             if [ -n "$volume_backup" ] && [ -f "$volume_backup" ]; then
                 if [ "$DRY_RUN" = true ]; then
                     echo "  [DRY RUN] Would restore ${service} data"
                 else
-                    docker volume rm "ai-stack_${service}_data" 2>/dev/null || true
-                    docker volume create "ai-stack_${service}_data"
+                    docker volume rm "${volume_name}" 2>/dev/null || true
+                    docker volume create "${volume_name}"
                     docker run --rm \
-                        -v "ai-stack_${service}_data:/data" \
+                        -v "${volume_name}:/data" \
                         -v "$BACKUP_DIR":/backup \
                         alpine sh -c "cd /data && tar xzf /backup/$(basename "$volume_backup")"
                 fi

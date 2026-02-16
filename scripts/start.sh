@@ -82,11 +82,11 @@ if ! docker network inspect core-network > /dev/null 2>&1; then
 fi
 print_success "External network 'core-network' is available"
 
-# Check if current_run.env file exists
+# Check if rendered environment file exists
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env
 else
-    echo -e "❌ current_run.env file not found"
+    echo -e "❌ .rendered.env file not found"
     exit 1
 fi
 
@@ -109,6 +109,14 @@ if [ ${#missing_vars[@]} -gt 0 ]; then
     exit 1
 fi
 print_success "Configuration validated"
+
+docker_cpus="$(docker info --format '{{.NCPU}}' 2>/dev/null || echo "")"
+if [ -n "$docker_cpus" ]; then
+    if awk "BEGIN {exit !(${OLLAMA_CPU_LIMIT:-0} > ${docker_cpus})}"; then
+        print_warning "OLLAMA_CPU_LIMIT (${OLLAMA_CPU_LIMIT}) exceeds available Docker CPUs (${docker_cpus}); capping to ${docker_cpus}."
+        export OLLAMA_CPU_LIMIT="$docker_cpus"
+    fi
+fi
 
 echo ""
 
@@ -138,7 +146,7 @@ docker-compose up -d ollama
 
 # Check for AI models
 print_step "  🔍 Checking AI models..."
-docker exec ollama ollama list | grep -Fxq -- "${1}" || {
+docker exec ollama ollama list | tail -n +2 | grep -q . || {
     print_warning "No AI models found in Ollama"
     echo "  📥 You can pull models with: docker exec ollama ollama pull [model_name]"
 }

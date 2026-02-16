@@ -58,7 +58,7 @@
 - **Setup**: Reduced to < 5 steps
 
 ### Testing
-- **Validation**: docker compose config - zero errors
+- **Validation**: docker-compose config - zero errors
 - **Health Checks**: All services configured
 - **Integration Tests**: End-to-end workflows documented
 
@@ -133,22 +133,22 @@ ai-stack/
 ## Troubleshooting Notes
 
 ### SearXNG Not Returning Results
-- Check service health: `docker compose ps searxng`
+- Check service health: `docker-compose ps searxng`
 - Test directly: `curl -k https://searxng.local/search?q=test`
-- Verify Open WebUI env: `docker compose exec open-webui env | grep SEARCH`
+- Verify Open WebUI env: `docker-compose exec open-webui env | grep SEARCH`
 
 ### Open WebUI Filesystem Access Issues
 - Verify paths in .env match your system
-- Check mounts: `docker compose exec open-webui ls -la /mnt/host/`
-- Test write: `docker compose exec open-webui touch /mnt/host/downloads/.test`
+- Check mounts: `docker-compose exec open-webui ls -la /mnt/host/`
+- Test write: `docker-compose exec open-webui touch /mnt/host/downloads/.test`
 
 ### PostgreSQL pgvector Issues
-- Verify extension: `docker compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT * FROM pg_extension WHERE extname='vector';"`
-- Check databases: `docker compose exec postgresql psql -U aistack -c "\l"`
+- Verify extension: `docker-compose exec postgresql psql -U aistack -d openwebui_db -c "SELECT * FROM pg_extension WHERE extname='vector';"`
+- Check databases: `docker-compose exec postgresql psql -U aistack -c "\l"`
 
 ### Traefik Routing Issues
 - Check dashboard: https://traefik.local
-- Verify labels: `docker compose config | grep traefik.http.routers`
+- Verify labels: `docker-compose config | grep traefik.http.routers`
 - Test direct access: `curl http://localhost:8080` (Open WebUI)
 
 ### Model Download Issues

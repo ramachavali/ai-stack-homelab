@@ -282,7 +282,7 @@ To access from other devices:
 ## 🛠️ Maintenance
 
 ### Regular Tasks
-- **Daily**: Check service status (`docker compose ps`)
+- **Daily**: Check service status (`docker-compose ps`)
 - **Weekly**: Run backup (`./scripts/backup.sh`)
 - **Monthly**: Update AI models, clean up logs
 - **Quarterly**: Update Docker images
@@ -291,12 +291,12 @@ To access from other devices:
 Key things to watch:
 - Disk space usage (`df -h`)
 - Memory usage (`docker stats`)
-- Service health (`docker compose ps`)
+- Service health (`docker-compose ps`)
 - Log file sizes (`du -sh logs/`)
 
 ### Updates
 1. **AI Models**: `docker exec ollama ollama pull llama3.2:3b`
-2. **Docker Images**: `docker compose pull && docker compose up -d`
+2. **Docker Images**: `docker-compose pull && docker-compose up -d`
 3. **Configuration**: Edit `.env` file and restart services
 
 This structure provides a robust, secure, and maintainable AI environment that can grow with your needs while remaining simple enough for beginners to understand and use effectively.

@@ -49,7 +49,7 @@ This document explains design decisions, architecture patterns, and rationale be
 **Rationale**:
 - **Simplicity**: Home lab environment, not multi-environment deployment
 - **Easier maintenance**: All services visible in one file
-- **Single command deployment**: `docker compose up -d`
+- **Single command deployment**: `docker-compose up -d`
 - **Less complexity**: No file merging, clear service relationships
 
 **Trade-offs Accepted**:
@@ -389,7 +389,7 @@ secrets:
 **Recommendations for Users**:
 ```bash
 # Manual PostgreSQL backup
-docker compose exec postgresql pg_dumpall -U aistack > backup.sql
+docker-compose exec postgresql pg_dumpall -U aistack > backup.sql
 
 # Volume backup
 docker run --rm -v postgres_data:/data -v $(pwd):/backup alpine tar czf /backup/postgres.tar.gz /data
@@ -515,7 +515,7 @@ certificatesResolvers:
 
 **Syntax Check**:
 ```bash
-docker compose config
+docker-compose config
 ```
 Validates YAML and environment variable substitution.
 

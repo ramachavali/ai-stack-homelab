@@ -18,7 +18,7 @@ cd "$PROJECT_ROOT"
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env
 else
-    echo -e "❌ .env file not found"
+    echo -e "❌ .rendered.env file not found"
     exit 1
 fi
 
@@ -151,20 +151,20 @@ backup_postgres() {
 backup_volumes() {
     echo -e "💾 Backing up Docker volumes..."
     
-    volumes=("n8n_data" "ollama_data" "open-webui_data" "redis_data" "litellm_data" "mcp_data")
+    volumes=("postgres_data" "n8n_data" "ollama_data" "open_webui_data" "redis_data" "litellm_data" "mcp_data" "searxng_data")
     
     for volume in "${volumes[@]}"; do
         echo "  📁 Backing up volume: $volume..."
-        if docker volume inspect "ai-stack_$volume" > /dev/null 2>&1; then
+        if docker volume inspect "$volume" > /dev/null 2>&1; then
             if [ "$COMPRESS" = true ]; then
                 docker run --rm \
-                    -v "ai-stack_$volume:/data" \
+                    -v "$volume:/data" \
                     -v "$BACKUP_DIR":/backup \
                     alpine tar czf "/backup/${volume}_${DATE}.tar.gz" -C /data .
                 encrypt_file "$BACKUP_DIR/${volume}_${DATE}.tar.gz"
             else
                 docker run --rm \
-                    -v "ai-stack_$volume:/data" \
+                    -v "$volume:/data" \
                     -v "$BACKUP_DIR":/backup \
                     alpine tar cf "/backup/${volume}_${DATE}.tar" -C /data .
                 encrypt_file "$BACKUP_DIR/${volume}_${DATE}.tar"
@@ -206,26 +206,28 @@ backup_service() {
     echo -e "🎯 Backing up service: $service"
     
     case "$service" in
-        postgres)
+        postgres|postgresql)
             backup_postgres
             ;;
-        n8n|ollama|open-webui|redis|litellm|mcp)
+        n8n|ollama|open-webui|redis|litellm|mcp|postgresql|searxng)
             echo "  💾 Backing up ${service} data..."
             volume_name="${service}_data"
             if [ "$service" = "open-webui" ]; then
-                volume_name="open-webui_data"
+                volume_name="open_webui_data"
+            elif [ "$service" = "postgresql" ]; then
+                volume_name="postgres_data"
             fi
             
-            if docker volume inspect "ai-stack_$volume_name" > /dev/null 2>&1; then
+            if docker volume inspect "$volume_name" > /dev/null 2>&1; then
                 if [ "$COMPRESS" = true ]; then
                     docker run --rm \
-                        -v "ai-stack_$volume_name:/data" \
+                        -v "$volume_name:/data" \
                         -v "$BACKUP_DIR":/backup \
                         alpine tar czf "/backup/${volume_name}_${DATE}.tar.gz" -C /data .
                     encrypt_file "$BACKUP_DIR/${volume_name}_${DATE}.tar.gz"
                 else
                     docker run --rm \
-                        -v "ai-stack_$volume_name:/data" \
+                        -v "$volume_name:/data" \
                         -v "$BACKUP_DIR":/backup \
                         alpine tar cf "/backup/${volume_name}_${DATE}.tar" -C /data .
                     encrypt_file "$BACKUP_DIR/${volume_name}_${DATE}.tar"
