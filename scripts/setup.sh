@@ -102,6 +102,63 @@ render_env() {
         done < "$filePath"
 }
 
+setup_tls_certificates() {
+    print_section "🔐 Setting Up TLS Certificates"
+
+    local core_root="${PROJECT_ROOT}/../coreservices-homelab"
+    local pki_script="${core_root}/scripts/pki-build.sh"
+    local pki_dir="${core_root}/pki"
+
+    if [ ! -x "$pki_script" ]; then
+        echo -e "⚠️ Core PKI script not found at: $pki_script"
+        echo -e "⚠️ Skipping cert generation (Traefik may serve default/self cert)"
+        echo ""
+        return
+    fi
+
+    local sans=(
+        "traefik.local"
+        "auth.local"
+        "core.local"
+        "vault.local"
+        "open-webui.local"
+        "n8n.local"
+        "litellm.local"
+        "ollama.local"
+        "mcpo.local"
+        "searxng.local"
+        "portal.local"
+        "picoclaw.local"
+    )
+
+    local pki_args=(
+        --out-dir "$pki_dir"
+        --ca-name "Foolsbook Local Root CA"
+        --hostname "traefik.local"
+    )
+    for san in "${sans[@]}"; do
+        pki_args+=(--san "$san")
+    done
+
+    "$pki_script" "${pki_args[@]}"
+
+    docker volume create traefik_certs > /dev/null
+    docker run --rm \
+        -v traefik_certs:/certs \
+        -v "$pki_dir/traefik:/src:ro" \
+        alpine:3.20 \
+        sh -ec '
+          cp /src/cert.pem /certs/cert.pem
+          cp /src/key.pem /certs/key.pem
+          chmod 644 /certs/cert.pem
+          chmod 600 /certs/key.pem
+        '
+
+    echo -e "✅ TLS cert installed into traefik_certs volume"
+    echo -e "✅ CA bundle available at: ${pki_dir}/client/ca_bundle.crt"
+    echo ""
+}
+
 # Function to create environment file
 setup_environment() {
     print_section "⚙️ Setting Up Environment"
@@ -327,6 +384,7 @@ show_completion() {
 main() {
     check_prerequisites
     setup_environment
+    setup_tls_certificates
     create_directories
     create_configs
     pull_images
