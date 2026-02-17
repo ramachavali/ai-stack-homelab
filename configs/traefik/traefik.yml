@@ -46,6 +46,9 @@ providers:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false  # Only expose services with traefik.enable=true
     network: "core-network"
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
 
 # Logging
 log:
