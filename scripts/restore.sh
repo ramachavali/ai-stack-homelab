@@ -7,12 +7,26 @@
 
 set -o errexit
 set -o nounset
+set -o pipefail
 
 #set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
+
+COMPOSE_CMD=(docker-compose --profile picoclaw)
+
+compose_service_exists() {
+    local target="$1"
+    mapfile -t compose_services < <(${COMPOSE_CMD[@]} config --services)
+    for svc in "${compose_services[@]}"; do
+        if [ "$svc" = "$target" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
 
 # Load environment variables
 if [ -f ./.rendered.env ]; then
@@ -147,8 +161,13 @@ restore_postgres() {
     fi
     
     # Ensure PostgreSQL is running
-    docker-compose up -d postgresql
-    sleep 10
+    if compose_service_exists "postgresql"; then
+        ${COMPOSE_CMD[@]} up -d postgresql
+        sleep 10
+    else
+        echo -e "❌ Service 'postgresql' not found in compose configuration"
+        exit 1
+    fi
     
     # Restore main database
     main_backup=$(decrypt_file "$BACKUP_DIR/postgres_main_${RESTORE_DATE}.sql.gz")
@@ -301,7 +320,7 @@ if [ "$DRY_RUN" = false ]; then
     
     # Stop services before restore
     echo -e "🛑 Stopping AI Stack services..."
-    docker-compose down
+    ${COMPOSE_CMD[@]} down
 fi
 
 # Perform restore based on type

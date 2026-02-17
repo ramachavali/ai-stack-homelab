@@ -2,29 +2,21 @@
 
 # =================================================================
 # AI Stack Stop Script
+# Stops services by looping through compose-defined services in reverse order.
 # =================================================================
 
 set -o errexit
 set -o nounset
+set -o pipefail
 
-#set -x
-
-# Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-# Load environment variables
-if [ -f ./.rendered.env ]; then
-    source ./.rendered.env
-else
-    echo -e "❌ .rendered.env file not found"
-    exit 1
-fi
+COMPOSE_CMD=(docker-compose --profile picoclaw)
 
 echo -e "🛑 Stopping AI Stack..."
 echo "======================"
 
-# Parse command line arguments
 FORCE_STOP=false
 REMOVE_VOLUMES=false
 
@@ -63,54 +55,36 @@ if [ "$REMOVE_VOLUMES" = true ]; then
     fi
 fi
 
-# Stop services gracefully or forcefully
 if [ "$FORCE_STOP" = true ]; then
     echo -e "⚡ Force stopping all services..."
-    docker-compose kill
+    ${COMPOSE_CMD[@]} kill
 else
     echo -e "🔄 Gracefully stopping all services..."
 
-    echo -e "🦐 Stopping PicoClaw..."
-    docker-compose stop picoclaw-gateway
-    
-    # Stop services in reverse dependency order
-    echo -e "🔗 Stopping MCP services..."
-    docker-compose stop mcpo n8n-mcp
-    
-    echo -e "🌐 Stopping Open WebUI..."
-    docker-compose stop open-webui
-    
-    echo -e "🎯 Stopping LiteLLM..."
-    docker-compose stop litellm
-    
-    echo -e "🔄 Stopping n8n..."
-    docker-compose stop n8n
-    
-    echo -e "🤖 Stopping Ollama..."
-    docker-compose stop ollama
-    
-    echo -e "🔴 Stopping Redis..."
-    docker-compose stop redis
-    
-    echo -e "🐘 Stopping PostgreSQL..."
-    docker-compose stop postgresql
-
+    mapfile -t services < <(${COMPOSE_CMD[@]} config --services)
+    if [ ${#services[@]} -eq 0 ]; then
+        echo -e "⚠️ No services found in compose configuration"
+    else
+        for (( idx=${#services[@]}-1; idx>=0; idx-- )); do
+            service="${services[$idx]}"
+            echo -e "  ⏹ Stopping ${service}..."
+            ${COMPOSE_CMD[@]} stop "$service" || true
+        done
+    fi
 fi
 
 echo -e "🧹 Removing containers..."
-docker-compose down
+${COMPOSE_CMD[@]} down
 
 if [ "$REMOVE_VOLUMES" = true ]; then
     echo -e "🗑️  Removing volumes..."
-    docker-compose down -v
+    ${COMPOSE_CMD[@]} down -v
     echo -e "💀 All data has been removed!"
 fi
 
-# Clean up unused resources
 echo -e "🧽 Cleaning up unused Docker resources..."
 docker system prune -f
 
-# Show final status
 echo ""
 if [ "$REMOVE_VOLUMES" = true ]; then
     echo -e "🏁 AI Stack stopped and all data removed"
@@ -122,6 +96,6 @@ fi
 
 echo ""
 echo "Other useful commands:"
-echo "  docker-compose ps              # Check service status"
-echo "  docker-compose logs [service]  # View service logs"
-echo "  docker system df               # Check Docker disk usage"
+echo "  docker-compose --profile picoclaw ps              # Check service status"
+echo "  docker-compose --profile picoclaw logs [service]  # View service logs"
+echo "  docker system df                                   # Check Docker disk usage"

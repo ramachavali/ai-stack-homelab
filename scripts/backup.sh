@@ -7,12 +7,26 @@
 
 set -o errexit
 set -o nounset
+set -o pipefail
 
 #set -x
 
 # Project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
+
+COMPOSE_CMD=(docker-compose --profile picoclaw)
+
+compose_service_exists() {
+    local target="$1"
+    mapfile -t compose_services < <(${COMPOSE_CMD[@]} config --services)
+    for svc in "${compose_services[@]}"; do
+        if [ "$svc" = "$target" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
 
 # Load environment variables
 if [ -f ./.rendered.env ]; then
@@ -92,8 +106,8 @@ encrypt_file() {
 # Function to check if services are running
 check_services() {
     echo -e "🔍 Checking service status..."
-    
-    if ! docker-compose ps --services --filter "status=running" | grep -q postgres; then
+
+    if compose_service_exists "postgresql" && ! ${COMPOSE_CMD[@]} ps --services --filter "status=running" | grep -q "^postgresql$"; then
         echo -e "⚠️ PostgreSQL is not running. Some backups may be incomplete."
     else
         echo -e "✅ PostgreSQL is running"
