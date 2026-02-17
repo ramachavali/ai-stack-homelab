@@ -177,21 +177,16 @@ print_step "  🔗 Starting MCP servers..."
 docker-compose up -d n8n-mcp mcpo
 sleep 15  # Give MCP servers time to initialize
 
-# 8. Start PicoClaw (optional)
-if is_truthy "${ENABLE_PICOCLAW:-false}"; then
-    print_step "  🦐 Starting PicoClaw gateway (optional profile)..."
+# 8. Start PicoClaw
+print_step "  🦐 Starting PicoClaw gateway (optional profile)..."
     docker-compose --profile picoclaw up -d picoclaw-gateway
     wait_for_service "PicoClaw" "docker-compose exec -T picoclaw-gateway wget --spider -q http://localhost:18790/health" 60
-fi
 
 # Final health check
 print_step "🏥 Final Health Check"
 sleep 5
 
-services=("postgresql" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo")
-if is_truthy "${ENABLE_PICOCLAW:-false}"; then
-    services+=("picoclaw-gateway")
-fi
+services=("postgresql" "redis" "ollama" "n8n" "litellm" "open-webui" "n8n-mcp" "mcpo" "picoclaw-gateway")
 failed_services=()
 
 for service in "${services[@]}"; do

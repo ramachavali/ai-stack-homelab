@@ -76,10 +76,8 @@ if [ "$FORCE_STOP" = true ]; then
 else
     echo -e "🔄 Gracefully stopping all services..."
 
-    if is_truthy "${ENABLE_PICOCLAW:-false}"; then
-        echo -e "🦐 Stopping PicoClaw..."
-        docker-compose stop picoclaw-gateway
-    fi
+    echo -e "🦐 Stopping PicoClaw..."
+    docker-compose stop picoclaw-gateway
     
     # Stop services in reverse dependency order
     echo -e "🔗 Stopping MCP services..."
