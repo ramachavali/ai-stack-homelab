@@ -468,6 +468,56 @@ services:
           cpus: '${SEARXNG_CPU_RESERVATION:-0.1}'
           memory: ${SEARXNG_MEMORY_RESERVATION:-128M}
 
+  # PicoClaw Gateway (optional profile)
+  picoclaw-gateway:
+    build:
+      context: https://github.com/sipeed/picoclaw.git#main
+      dockerfile: Dockerfile
+    container_name: picoclaw-gateway
+    profiles:
+      - picoclaw
+    restart: unless-stopped
+    depends_on:
+      ollama:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PICOCLAW_AGENTS_DEFAULTS_PROVIDER: ${PICOCLAW_PROVIDER:-ollama}
+      PICOCLAW_AGENTS_DEFAULTS_MODEL: ${PICOCLAW_MODEL:-llama3.2:3b}
+      PICOCLAW_PROVIDERS_OLLAMA_API_BASE: ${PICOCLAW_OLLAMA_API_BASE:-http://ollama:11434/v1}
+      PICOCLAW_AGENTS_DEFAULTS_WORKSPACE: /root/.picoclaw/workspace
+      PICOCLAW_GATEWAY_HOST: 0.0.0.0
+      PICOCLAW_GATEWAY_PORT: 18790
+      TZ: ${TIMEZONE:-UTC}
+    volumes:
+      - ./configs/picoclaw/config.json:/root/.picoclaw/config.json:ro
+      - picoclaw_workspace:/root/.picoclaw/workspace
+    networks:
+      - ai-stack
+      - core-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=core-network"
+      - "traefik.http.routers.picoclaw.rule=Host(`picoclaw.local`)"
+      - "traefik.http.routers.picoclaw.entrypoints=websecure"
+      - "traefik.http.routers.picoclaw.tls=true"
+      - "traefik.http.services.picoclaw.loadbalancer.server.port=18790"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:18790/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '${PICOCLAW_CPU_LIMIT:-0.5}'
+          memory: ${PICOCLAW_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: '${PICOCLAW_CPU_RESERVATION:-0.1}'
+          memory: ${PICOCLAW_MEMORY_RESERVATION:-128M}
+
 networks:
   ai-stack:
     driver: bridge
@@ -494,3 +544,5 @@ volumes:
     name: mcp_data
   searxng_data:
     name: searxng_data
+  picoclaw_workspace:
+    name: picoclaw_workspace

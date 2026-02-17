@@ -11,6 +11,7 @@ Complete home lab AI environment featuring local AI models, workflow automation,
 - **LiteLLM** - Unified AI proxy for multiple providers
 - **SearXNG** - Privacy-respecting web search engine for RAG
 - **MCP Services** - Model Context Protocol integration (n8n-mcp, mcpo)
+- **PicoClaw (optional)** - Ultra-lightweight AI gateway agent
 - **Traefik (external)** - Reverse proxy served by `coreservices-homelab`
 - **Redis** - High-performance caching layer
 
@@ -53,12 +54,23 @@ sudo nano /etc/hosts
 
 Add this line:
 ```
-127.0.0.1 open-webui.local n8n.local litellm.local traefik.local ollama.local mcpo.local searxng.local
+127.0.0.1 open-webui.local n8n.local litellm.local traefik.local ollama.local mcpo.local searxng.local picoclaw.local
 ```
 
 **4. Start the stack**
 ```bash
 ./scripts/start.sh
+```
+
+**Optional: Enable PicoClaw in start/stop scripts**
+```bash
+# set in .rendered.env or scripts/.unrendered.env, then re-run setup
+ENABLE_PICOCLAW=true
+```
+
+Manual one-off start is still available:
+```bash
+docker-compose --profile picoclaw up -d picoclaw-gateway
 ```
 
 **5. Download AI models (runs in background)**
@@ -81,6 +93,7 @@ Once running, access services at:
 | **Traefik** | https://traefik.local | Reverse proxy dashboard (served by `coreservices-homelab`) |
 | **Ollama** | https://ollama.local | AI model API |
 | **MCPO** | https://mcpo.local | MCP orchestrator |
+| **PicoClaw** | https://picoclaw.local/health | PicoClaw gateway health endpoint |
 
 **First-time setup:**
 - Open WebUI: First user becomes admin

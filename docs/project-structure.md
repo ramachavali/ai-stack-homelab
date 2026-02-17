@@ -33,6 +33,8 @@ ai-stack/
 │   ├── litellm/                  # AI proxy configuration
 │   ├── mcp/                      # AI protocol settings
 │   │   └── config.json
+│   ├── picoclaw/                 # PicoClaw gateway configuration
+│   │   └── config.json
 │   └── nginx/                    # Web server (if used)
 │
 ├── data/                         # Persistent data (created automatically)

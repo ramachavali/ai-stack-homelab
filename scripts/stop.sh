@@ -24,6 +24,12 @@ fi
 echo -e "🛑 Stopping AI Stack..."
 echo "======================"
 
+is_truthy() {
+    local value="${1:-false}"
+    value="$(echo "$value" | tr '[:upper:]' '[:lower:]')"
+    [[ "$value" == "true" || "$value" == "1" || "$value" == "yes" || "$value" == "on" ]]
+}
+
 # Parse command line arguments
 FORCE_STOP=false
 REMOVE_VOLUMES=false
@@ -69,6 +75,11 @@ if [ "$FORCE_STOP" = true ]; then
     docker-compose kill
 else
     echo -e "🔄 Gracefully stopping all services..."
+
+    if is_truthy "${ENABLE_PICOCLAW:-false}"; then
+        echo -e "🦐 Stopping PicoClaw..."
+        docker-compose stop picoclaw-gateway
+    fi
     
     # Stop services in reverse dependency order
     echo -e "🔗 Stopping MCP services..."
