@@ -38,6 +38,11 @@ def home():
             "url": os.getenv("MCPO_URL", "https://mcpo.local"),
             "description": "MCP orchestrator",
         },
+        {
+            "name": "PicoClaw",
+            "url": os.getenv("PICOCLAW_URL", "https://picoclaw.local"),
+            "description": "Ultra-lightweight AI gateway",
+        },
     ]
 
     core_links = [
