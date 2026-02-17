@@ -24,12 +24,6 @@ fi
 echo -e "🛑 Stopping AI Stack..."
 echo "======================"
 
-is_truthy() {
-    local value="${1:-false}"
-    value="$(echo "$value" | tr '[:upper:]' '[:lower:]')"
-    [[ "$value" == "true" || "$value" == "1" || "$value" == "yes" || "$value" == "on" ]]
-}
-
 # Parse command line arguments
 FORCE_STOP=false
 REMOVE_VOLUMES=false

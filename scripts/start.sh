@@ -33,12 +33,6 @@ print_warning() {
     echo -e "⚠️ $1"
 }
 
-is_truthy() {
-    local value="${1:-false}"
-    value="$(echo "$value" | tr '[:upper:]' '[:lower:]')"
-    [[ "$value" == "true" || "$value" == "1" || "$value" == "yes" || "$value" == "on" ]]
-}
-
 # Function to show error
 print_error() {
     echo -e "❌ $1"
@@ -178,9 +172,9 @@ docker-compose up -d n8n-mcp mcpo
 sleep 15  # Give MCP servers time to initialize
 
 # 8. Start PicoClaw
-print_step "  🦐 Starting PicoClaw gateway (optional profile)..."
-    docker-compose --profile picoclaw up -d picoclaw-gateway
-    wait_for_service "PicoClaw" "docker-compose exec -T picoclaw-gateway wget --spider -q http://localhost:18790/health" 60
+print_step "  🦐 Starting PicoClaw gateway..."
+docker-compose --profile picoclaw up -d picoclaw-gateway
+wait_for_service "PicoClaw" "docker-compose exec -T picoclaw-gateway wget --spider -q http://localhost:18790/health" 60
 
 # Final health check
 print_step "🏥 Final Health Check"
@@ -207,9 +201,7 @@ if [ ${#failed_services[@]} -eq 0 ]; then
     echo -e "🤖 Open WebUI:         http://localhost:${OPEN_WEBUI_PORT:-8080}"
     echo -e "🎯 LiteLLM Proxy:      http://localhost:${LITELLM_PORT:-4000}"
     echo -e "🔗 MCP Orchestrator:   http://localhost:${MCPO_PORT:-8000}"
-    if is_truthy "${ENABLE_PICOCLAW:-false}"; then
-        echo -e "🦐 PicoClaw Health:    https://picoclaw.local/health"
-    fi
+    echo -e "🦐 PicoClaw Health:    https://picoclaw.local/health"
     echo ""
     echo -e "🏁 First Time Setup:"
     echo "• Create your account in n8n (first user becomes owner)"
