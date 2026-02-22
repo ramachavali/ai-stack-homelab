@@ -127,7 +127,10 @@ fi
 echo ""
 print_step "🚀 Starting Services"
 
-mapfile -t services < <(${COMPOSE_CMD[@]} config --services)
+services=()
+while IFS= read -r service; do
+    services+=("$service")
+done < <(${COMPOSE_CMD[@]} config --services)
 if [ ${#services[@]} -eq 0 ]; then
     print_error "No services found in compose configuration"
     exit 1

@@ -61,7 +61,10 @@ if [ "$FORCE_STOP" = true ]; then
 else
     echo -e "🔄 Gracefully stopping all services..."
 
-    mapfile -t services < <(${COMPOSE_CMD[@]} config --services)
+    services=()
+    while IFS= read -r service; do
+        services+=("$service")
+    done < <(${COMPOSE_CMD[@]} config --services)
     if [ ${#services[@]} -eq 0 ]; then
         echo -e "⚠️ No services found in compose configuration"
     else
