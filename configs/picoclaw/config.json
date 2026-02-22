@@ -1,10 +1,18 @@
 {
+  "model_list": [
+    {
+      "model_name": "ollama-local",
+      "model": "ollama/llama3.2:1b",
+      "api_base": "http://ollama:11434/v1",
+      "api_key": "ollama-local"
+    }
+  ],
   "agents": {
     "defaults": {
-      "workspace": "/root/.picoclaw/workspace",
+      "workspace": "/home/picoclaw/.picoclaw/workspace",
       "restrict_to_workspace": true,
       "provider": "ollama",
-      "model": "ollama/llama3.2:3b",
+      "model": "ollama-local",
       "max_tokens": 4096,
       "temperature": 0.7,
       "max_tool_iterations": 20

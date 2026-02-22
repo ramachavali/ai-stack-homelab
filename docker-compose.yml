@@ -485,16 +485,17 @@ services:
       - no-new-privileges:true
     environment:
       PICOCLAW_AGENTS_DEFAULTS_PROVIDER: ${PICOCLAW_PROVIDER:-ollama}
-      PICOCLAW_AGENTS_DEFAULTS_MODEL: ${PICOCLAW_MODEL:-ollama/llama3.2:3b}
+      PICOCLAW_AGENTS_DEFAULTS_MODEL: ${PICOCLAW_MODEL:-ollama-local}
       PICOCLAW_PROVIDERS_OLLAMA_API_KEY: ${PICOCLAW_OLLAMA_API_KEY:-ollama-local}
       PICOCLAW_PROVIDERS_OLLAMA_API_BASE: ${PICOCLAW_OLLAMA_API_BASE:-http://ollama:11434/v1}
-      PICOCLAW_AGENTS_DEFAULTS_WORKSPACE: /root/.picoclaw/workspace
+      PICOCLAW_AGENTS_DEFAULTS_WORKSPACE: /home/picoclaw/.picoclaw/workspace
       PICOCLAW_GATEWAY_HOST: 0.0.0.0
       PICOCLAW_GATEWAY_PORT: 18790
       TZ: ${TIMEZONE:-UTC}
     volumes:
-      - ./configs/picoclaw/config.json:/root/.picoclaw/config.json:ro
-      - picoclaw_workspace:/root/.picoclaw/workspace
+      - ./configs/picoclaw/config.json:/home/picoclaw/.picoclaw/config.json:ro
+      - ./configs/picoclaw/HEARTBEAT.md:/home/picoclaw/.picoclaw/workspace/HEARTBEAT.md:ro
+      - picoclaw_workspace:/home/picoclaw/.picoclaw/workspace
     networks:
       - ai-stack
       - core-network
