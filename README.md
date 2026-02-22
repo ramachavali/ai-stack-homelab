@@ -21,6 +21,7 @@ Private AI services stack that runs on top of `coreservices-homelab` (Traefik + 
 2. Core stack is running first (`../coreservices-homelab`) to provide:
    - `core-network`
    - Traefik routing/TLS
+   - Shared Grafana at `https://grafana.local`
 
 ## Quick Start
 
@@ -35,7 +36,7 @@ cd /Users/rama/work/ai-stack-homelab
 Add to `/etc/hosts` on your client machine:
 
 ```text
-127.0.0.1 open-webui.local n8n.local litellm.local traefik.local ollama.local mcpo.local searxng.local portal.local picoclaw.local
+127.0.0.1 open-webui.local n8n.local litellm.local traefik.local ollama.local mcpo.local searxng.local portal.local picoclaw.local grafana.local
 ```
 
 ## Service URLs

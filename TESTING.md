@@ -270,7 +270,7 @@ docker-compose logs litellm | grep -i "database"
 
 **1. Dashboard access**:
 - Navigate to https://traefik.local
-- **Expected**: Traefik dashboard showing all routers (Traefik runs in `coreservices-homelab`)
+- **Expected**: Traefik dashboard showing all routers (Traefik runs in `coreservices-homelab`, including Grafana route)
 
 **2. Verify all routes**:
 Check dashboard shows routers for:
@@ -278,6 +278,7 @@ Check dashboard shows routers for:
 - n8n
 - litellm
 - searxng
+- grafana
 - ollama
 - mcpo
 

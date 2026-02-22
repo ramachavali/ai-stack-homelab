@@ -436,7 +436,7 @@ Docker Compose handles via `depends_on` with health conditions. Ensures PostgreS
 
 **Prepared for**:
 - Prometheus (service metrics)
-- Grafana (visualization)
+- Grafana (visualization, provided by `coreservices-homelab` at `https://grafana.local`)
 - Portainer (container management)
 
 **Design**:
@@ -455,15 +455,7 @@ prometheus:
   networks:
     - ai-stack
 
-grafana:
-  image: grafana/grafana:latest
-  depends_on:
-    - prometheus
-  networks:
-    - ai-stack
-  labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.grafana.rule=Host(`grafana.local`)"
+# Grafana is hosted in coreservices-homelab and already routed by core Traefik.
 ```
 
 ### Remote Access
