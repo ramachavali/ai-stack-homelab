@@ -119,6 +119,7 @@ setup_tls_certificates() {
     local sans=(
         "traefik.local"
         "auth.local"
+        "grafana.local"
         "core.local"
         "vault.local"
         "open-webui.local"
@@ -353,31 +354,17 @@ create_backup_script() {
 # Function to display completion message
 show_completion() {
     print_section "🎉 Setup Completed Successfully!"
-    
-    echo -e "Your AI Stack is ready to start!"
-    echo ""
-    echo -e "Next Steps:"
-    echo "1. Start the AI Stack:    ./scripts/start.sh"
-    echo "2. Wait for all services to start (2-3 minutes)"
-    echo "3. Access your services:"
-    echo "   • n8n Workflows:       http://localhost:5678"
-    echo "   • Open WebUI:          http://localhost:8080"
-    echo "   • LiteLLM Proxy:       http://localhost:4000"
-    echo "   • MCP Orchestrator:    http://localhost:8000"
-    echo ""
-    echo -e "First Time Setup:"
-    echo "• Create accounts in n8n and Open WebUI"
-    echo "• n8n: First user becomes the owner"
-    echo "• Open WebUI: First user becomes admin"
-    echo ""
-    echo -e "Important Commands:"
-    echo "• Start all services:     ./scripts/start.sh"
-    echo "• Stop all services:      ./scripts/stop.sh"
-    echo "• Backup data:            ./scripts/backup.sh"
-    echo "• View logs:              docker-compose logs -f [service]"
-    echo ""
-    echo -e "💾 Remember to backup your .env file securely!"
-    echo ""
+
+    echo "Run ./scripts/start.sh to launch services."
+    echo "Endpoints:"
+    echo "  https://open-webui.local"
+    echo "  https://n8n.local"
+    echo "  https://litellm.local"
+    echo "  https://ollama.local"
+    echo "  https://mcpo.local"
+    echo "  https://searxng.local"
+    echo "  https://portal.local"
+    echo "  https://picoclaw.local/health"
 }
 
 # Main execution

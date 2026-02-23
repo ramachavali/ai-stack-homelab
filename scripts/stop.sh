@@ -85,10 +85,6 @@ if [ "$REMOVE_VOLUMES" = true ]; then
     echo -e "💀 All data has been removed!"
 fi
 
-echo -e "🧽 Cleaning up unused Docker resources..."
-docker system prune -f
-
-echo ""
 if [ "$REMOVE_VOLUMES" = true ]; then
     echo -e "🏁 AI Stack stopped and all data removed"
     echo "To start fresh, run: ./scripts/setup.sh"
@@ -96,9 +92,3 @@ else
     echo -e "🏁 AI Stack stopped successfully"
     echo "Data is preserved. To restart, run: ./scripts/start.sh"
 fi
-
-echo ""
-echo "Other useful commands:"
-echo "  docker-compose --profile picoclaw ps              # Check service status"
-echo "  docker-compose --profile picoclaw logs [service]  # View service logs"
-echo "  docker system df                                   # Check Docker disk usage"
