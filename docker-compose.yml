@@ -101,10 +101,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '${OLLAMA_CPU_LIMIT:-6.0}'
+          cpus: '${OLLAMA_CPU_LIMIT:-3.0}'
           memory: ${OLLAMA_MEMORY_LIMIT:-12G}
         reservations:
-          cpus: '${OLLAMA_CPU_RESERVATION:-1.0}'
+          cpus: '${OLLAMA_CPU_RESERVATION:-0.5}'
           memory: ${OLLAMA_MEMORY_RESERVATION:-2G}
 
   # n8n Workflow Automation
@@ -229,7 +229,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 120s
     deploy:
       resources:
         limits:
