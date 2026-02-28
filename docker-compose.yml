@@ -471,31 +471,15 @@ services:
 
   # PicoClaw Gateway (optional profile)
   picoclaw-gateway:
-    build:
-      context: https://github.com/sipeed/picoclaw.git#main
-      dockerfile: Dockerfile
+    image: docker.io/sipeed/picoclaw:latest
     container_name: picoclaw-gateway
+    restart: on-failure
     profiles:
-      - picoclaw
-    restart: unless-stopped
-    depends_on:
-      ollama:
-        condition: service_healthy
+      - gateway
     security_opt:
       - no-new-privileges:true
-    environment:
-      PICOCLAW_AGENTS_DEFAULTS_PROVIDER: ${PICOCLAW_PROVIDER:-ollama}
-      PICOCLAW_AGENTS_DEFAULTS_MODEL: ${PICOCLAW_MODEL:-ollama-local}
-      PICOCLAW_PROVIDERS_OLLAMA_API_KEY: ${PICOCLAW_OLLAMA_API_KEY:-ollama-local}
-      PICOCLAW_PROVIDERS_OLLAMA_API_BASE: ${PICOCLAW_OLLAMA_API_BASE:-http://ollama:11434/v1}
-      PICOCLAW_AGENTS_DEFAULTS_WORKSPACE: /home/picoclaw/.picoclaw/workspace
-      PICOCLAW_GATEWAY_HOST: 0.0.0.0
-      PICOCLAW_GATEWAY_PORT: 18790
-      TZ: ${TIMEZONE:-UTC}
     volumes:
-      - ./configs/picoclaw/config.json:/home/picoclaw/.picoclaw/config.json:ro
-      - ./configs/picoclaw/HEARTBEAT.md:/home/picoclaw/.picoclaw/workspace/HEARTBEAT.md:ro
-      - picoclaw_workspace:/home/picoclaw/.picoclaw/workspace
+      - ./data/picoclaw:/root/.picoclaw
     networks:
       - ai-stack
       - core-network
@@ -506,20 +490,6 @@ services:
       - "traefik.http.routers.picoclaw.entrypoints=websecure"
       - "traefik.http.routers.picoclaw.tls=true"
       - "traefik.http.services.picoclaw.loadbalancer.server.port=18790"
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:18790/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    deploy:
-      resources:
-        limits:
-          cpus: '${PICOCLAW_CPU_LIMIT:-0.5}'
-          memory: ${PICOCLAW_MEMORY_LIMIT:-512M}
-        reservations:
-          cpus: '${PICOCLAW_CPU_RESERVATION:-0.1}'
-          memory: ${PICOCLAW_MEMORY_RESERVATION:-128M}
 
 networks:
   ai-stack:
@@ -547,5 +517,3 @@ volumes:
     name: mcp_data
   searxng_data:
     name: searxng_data
-  picoclaw_workspace:
-    name: picoclaw_workspace
