@@ -17,6 +17,14 @@ cd "$PROJECT_ROOT"
 
 COMPOSE_CMD=(docker-compose)
 
+compose_volume_list() {
+    local compose_volumes=()
+    while IFS= read -r vol; do
+        [ -n "$vol" ] && compose_volumes+=("$vol")
+    done < <(${COMPOSE_CMD[@]} config --volumes)
+    printf '%s\n' "${compose_volumes[@]}"
+}
+
 compose_service_exists() {
     local target="$1"
     compose_services=()
@@ -216,17 +224,31 @@ restore_postgres() {
 # Function to restore Docker volumes
 restore_volumes() {
     echo -e "💾 Restoring Docker volumes..."
-    
-    volumes=("postgres_data" "n8n_data" "ollama_data" "open_webui_data" "redis_data" "litellm_data" "mcp_data" "searxng_data")
-    
+
+    volumes=()
+    while IFS= read -r volume; do
+        [ -n "$volume" ] && volumes+=("$volume")
+    done < <(compose_volume_list)
+
+    if [ ${#volumes[@]} -eq 0 ]; then
+        echo -e "    ⚠️ No named volumes found in compose configuration"
+    fi
+
     for volume in "${volumes[@]}"; do
         volume_backup=$(decrypt_file "$BACKUP_DIR/${volume}_${RESTORE_DATE}.tar.gz")
+        if [ -z "$volume_backup" ] || [ ! -f "$volume_backup" ]; then
+            volume_backup=$(decrypt_file "$BACKUP_DIR/${volume}_${RESTORE_DATE}.tar")
+        fi
         if [ -n "$volume_backup" ] && [ -f "$volume_backup" ]; then
             echo -e "  📁 Restoring ${volume}..."
             
             if [ "$DRY_RUN" = true ]; then
                 echo "    [DRY RUN] Would restore volume: ${volume}"
             else
+                tar_extract_flags="xf"
+                case "$volume_backup" in
+                    *.tar.gz|*.tgz) tar_extract_flags="xzf" ;;
+                esac
                 # Remove existing volume and recreate
                 docker volume rm "${volume}" 2>/dev/null || true
                 docker volume create "${volume}"
@@ -235,18 +257,19 @@ restore_volumes() {
                 docker run --rm \
                     -v "${volume}:/data" \
                     -v "$BACKUP_DIR":/backup \
-                    alpine sh -c "cd /data && tar xzf /backup/$(basename "$volume_backup")"
+                    alpine sh -c "cd /data && tar ${tar_extract_flags} /backup/$(basename "$volume_backup")"
             fi
             
             rm -f "$volume_backup"
         fi
     done
 
-    picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar.gz")
-    if [ -z "$picoclaw_backup" ] || [ ! -f "$picoclaw_backup" ]; then
-        picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar")
-    fi
-    if [ -n "$picoclaw_backup" ] && [ -f "$picoclaw_backup" ]; then
+    if ! printf '%s\n' "${volumes[@]}" | grep -qx "picoclaw_data"; then
+        picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar.gz")
+        if [ -z "$picoclaw_backup" ] || [ ! -f "$picoclaw_backup" ]; then
+            picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar")
+        fi
+        if [ -n "$picoclaw_backup" ] && [ -f "$picoclaw_backup" ]; then
         echo -e "  📁 Restoring bind mount: data/picoclaw..."
         if [ "$DRY_RUN" = true ]; then
             echo "    [DRY RUN] Would restore data/picoclaw"
@@ -256,6 +279,7 @@ restore_volumes() {
             tar xf "$picoclaw_backup" -C data
         fi
         rm -f "$picoclaw_backup"
+        fi
     fi
     
     echo -e "✅ Volume restore completed"
@@ -307,12 +331,16 @@ restore_service() {
                 if [ "$DRY_RUN" = true ]; then
                     echo "  [DRY RUN] Would restore ${service} data"
                 else
+                    tar_extract_flags="xf"
+                    case "$volume_backup" in
+                        *.tar.gz|*.tgz) tar_extract_flags="xzf" ;;
+                    esac
                     docker volume rm "${volume_name}" 2>/dev/null || true
                     docker volume create "${volume_name}"
                     docker run --rm \
                         -v "${volume_name}:/data" \
                         -v "$BACKUP_DIR":/backup \
-                        alpine sh -c "cd /data && tar xzf /backup/$(basename "$volume_backup")"
+                        alpine sh -c "cd /data && tar ${tar_extract_flags} /backup/$(basename "$volume_backup")"
                 fi
                 rm -f "$volume_backup"
             else
@@ -328,9 +356,22 @@ restore_service() {
                 if [ "$DRY_RUN" = true ]; then
                     echo "  [DRY RUN] Would restore picoclaw data"
                 else
-                    rm -rf data/picoclaw
-                    mkdir -p data
-                    tar xf "$picoclaw_backup" -C data
+                    tar_extract_flags="xf"
+                    case "$picoclaw_backup" in
+                        *.tar.gz|*.tgz) tar_extract_flags="xzf" ;;
+                    esac
+                    if docker volume inspect picoclaw_data >/dev/null 2>&1 || printf '%s\n' "$(compose_volume_list)" | grep -qx "picoclaw_data"; then
+                        docker volume rm "picoclaw_data" 2>/dev/null || true
+                        docker volume create "picoclaw_data"
+                        docker run --rm \
+                            -v "picoclaw_data:/data" \
+                            -v "$BACKUP_DIR":/backup \
+                            alpine sh -c "cd /data && tar ${tar_extract_flags} /backup/$(basename "$picoclaw_backup")"
+                    else
+                        rm -rf data/picoclaw
+                        mkdir -p data
+                        tar ${tar_extract_flags} "$picoclaw_backup" -C data
+                    fi
                 fi
                 rm -f "$picoclaw_backup"
             else

@@ -477,7 +477,7 @@ services:
     security_opt:
       - no-new-privileges:true
     volumes:
-      - ./data/picoclaw:/root/.picoclaw
+      - picoclaw_data:/root/.picoclaw
     networks:
       - ai-stack
       - core-network
@@ -515,3 +515,5 @@ volumes:
     name: mcp_data
   searxng_data:
     name: searxng_data
+  picoclaw_data:
+    name: picoclaw_data

@@ -58,7 +58,6 @@ safe_remove "logs/nginx" "Unused Nginx logs directory"
 safe_remove "configs/n8n/.gitkeep" "n8n .gitkeep file"
 safe_remove "configs/ollama/.gitkeep" "Ollama .gitkeep file"
 safe_remove "data/open-webui" "Redundant open-webui data directory"
-safe_remove "data/picoclaw" "PicoClaw bind-mounted data directory"
 safe_remove "configs/postgres/init/00-install-extensions.sql" "Outdated PostgreSQL extension script"
 
 echo "Removing env files..."

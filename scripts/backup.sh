@@ -17,6 +17,14 @@ cd "$PROJECT_ROOT"
 
 COMPOSE_CMD=(docker-compose)
 
+compose_volume_list() {
+    local compose_volumes=()
+    while IFS= read -r vol; do
+        [ -n "$vol" ] && compose_volumes+=("$vol")
+    done < <(${COMPOSE_CMD[@]} config --volumes)
+    printf '%s\n' "${compose_volumes[@]}"
+}
+
 compose_service_exists() {
     local target="$1"
     compose_services=()
@@ -167,9 +175,16 @@ backup_postgres() {
 # Function to backup Docker volumes
 backup_volumes() {
     echo -e "💾 Backing up Docker volumes..."
-    
-    volumes=("postgres_data" "n8n_data" "ollama_data" "open_webui_data" "redis_data" "litellm_data" "mcp_data" "searxng_data")
-    
+
+    volumes=()
+    while IFS= read -r volume; do
+        [ -n "$volume" ] && volumes+=("$volume")
+    done < <(compose_volume_list)
+
+    if [ ${#volumes[@]} -eq 0 ]; then
+        echo -e "    ⚠️ No named volumes found in compose configuration"
+    fi
+
     for volume in "${volumes[@]}"; do
         echo "  📁 Backing up volume: $volume..."
         if docker volume inspect "$volume" > /dev/null 2>&1; then
@@ -191,7 +206,7 @@ backup_volumes() {
         fi
     done
 
-    if [ -d "data/picoclaw" ]; then
+    if ! printf '%s\n' "${volumes[@]}" | grep -qx "picoclaw_data" && [ -d "data/picoclaw" ]; then
         echo "  📁 Backing up bind mount: data/picoclaw..."
         if [ "$COMPRESS" = true ]; then
             tar czf "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz" -C data picoclaw
@@ -268,7 +283,22 @@ backup_service() {
             fi
             ;;
         picoclaw|picoclaw-gateway)
-            if [ -d "data/picoclaw" ]; then
+            if docker volume inspect picoclaw_data > /dev/null 2>&1; then
+                if [ "$COMPRESS" = true ]; then
+                    docker run --rm \
+                        -v "picoclaw_data:/data" \
+                        -v "$BACKUP_DIR":/backup \
+                        alpine tar czf "/backup/picoclaw_data_${DATE}.tar.gz" -C /data .
+                    encrypt_file "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz"
+                else
+                    docker run --rm \
+                        -v "picoclaw_data:/data" \
+                        -v "$BACKUP_DIR":/backup \
+                        alpine tar cf "/backup/picoclaw_data_${DATE}.tar" -C /data .
+                    encrypt_file "$BACKUP_DIR/picoclaw_data_${DATE}.tar"
+                fi
+                echo -e "✅ picoclaw backup completed"
+            elif [ -d "data/picoclaw" ]; then
                 if [ "$COMPRESS" = true ]; then
                     tar czf "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz" -C data picoclaw
                     encrypt_file "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz"
