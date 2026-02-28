@@ -185,7 +185,7 @@ create_directories() {
     print_section "📁 Creating Directory Structure"
     
     # Data directories
-    mkdir -p data/{postgres,n8n,ollama,open-webui,redis,litellm,mcp}
+    mkdir -p data/{postgres,n8n,ollama,open-webui,redis,litellm,mcp,picoclaw}
     echo -e "✅ Data directories created"
     
     # Log directories
@@ -202,7 +202,7 @@ create_directories() {
     
     # Set permissions
     chmod 700 data/postgres
-    chmod 755 data/{n8n,ollama,open-webui,redis,litellm,mcp}
+    chmod 755 data/{n8n,ollama,open-webui,redis,litellm,mcp,picoclaw}
     chmod 755 logs/{n8n,postgres}
     chmod 755 backups/{postgres,volumes}
     echo -e "✅ Permissions set"

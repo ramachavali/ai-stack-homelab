@@ -15,7 +15,7 @@ set -o pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-COMPOSE_CMD=(docker-compose --profile picoclaw)
+COMPOSE_CMD=(docker-compose)
 
 compose_service_exists() {
     local target="$1"
@@ -190,6 +190,19 @@ backup_volumes() {
             echo -e "    ⚠️ Volume $volume not found, skipping"
         fi
     done
+
+    if [ -d "data/picoclaw" ]; then
+        echo "  📁 Backing up bind mount: data/picoclaw..."
+        if [ "$COMPRESS" = true ]; then
+            tar czf "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz" -C data picoclaw
+            encrypt_file "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz"
+        else
+            tar cf "$BACKUP_DIR/picoclaw_data_${DATE}.tar" -C data picoclaw
+            encrypt_file "$BACKUP_DIR/picoclaw_data_${DATE}.tar"
+        fi
+    else
+        echo -e "    ⚠️ data/picoclaw not found, skipping"
+    fi
     
     echo -e "✅ Volume backup completed"
 }
@@ -252,6 +265,20 @@ backup_service() {
                 echo -e "✅ $service backup completed"
             else
                 echo -e "⚠️ Volume for $service not found"
+            fi
+            ;;
+        picoclaw|picoclaw-gateway)
+            if [ -d "data/picoclaw" ]; then
+                if [ "$COMPRESS" = true ]; then
+                    tar czf "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz" -C data picoclaw
+                    encrypt_file "$BACKUP_DIR/picoclaw_data_${DATE}.tar.gz"
+                else
+                    tar cf "$BACKUP_DIR/picoclaw_data_${DATE}.tar" -C data picoclaw
+                    encrypt_file "$BACKUP_DIR/picoclaw_data_${DATE}.tar"
+                fi
+                echo -e "✅ picoclaw backup completed"
+            else
+                echo -e "⚠️ data/picoclaw not found"
             fi
             ;;
         *)

@@ -12,7 +12,7 @@ set -o pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-COMPOSE_CMD=(docker-compose --profile picoclaw)
+COMPOSE_CMD=(docker-compose)
 
 echo -e "🚀 Starting AI Stack..."
 echo "========================"

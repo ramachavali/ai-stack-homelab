@@ -15,7 +15,7 @@ set -o pipefail
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-COMPOSE_CMD=(docker-compose --profile picoclaw)
+COMPOSE_CMD=(docker-compose)
 
 compose_service_exists() {
     local target="$1"
@@ -241,6 +241,22 @@ restore_volumes() {
             rm -f "$volume_backup"
         fi
     done
+
+    picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar.gz")
+    if [ -z "$picoclaw_backup" ] || [ ! -f "$picoclaw_backup" ]; then
+        picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar")
+    fi
+    if [ -n "$picoclaw_backup" ] && [ -f "$picoclaw_backup" ]; then
+        echo -e "  📁 Restoring bind mount: data/picoclaw..."
+        if [ "$DRY_RUN" = true ]; then
+            echo "    [DRY RUN] Would restore data/picoclaw"
+        else
+            rm -rf data/picoclaw
+            mkdir -p data
+            tar xf "$picoclaw_backup" -C data
+        fi
+        rm -f "$picoclaw_backup"
+    fi
     
     echo -e "✅ Volume restore completed"
 }
@@ -299,6 +315,24 @@ restore_service() {
                         alpine sh -c "cd /data && tar xzf /backup/$(basename "$volume_backup")"
                 fi
                 rm -f "$volume_backup"
+            else
+                echo -e "⚠️  No backup found for service: $service"
+            fi
+            ;;
+        picoclaw|picoclaw-gateway)
+            picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar.gz")
+            if [ -z "$picoclaw_backup" ] || [ ! -f "$picoclaw_backup" ]; then
+                picoclaw_backup=$(decrypt_file "$BACKUP_DIR/picoclaw_data_${RESTORE_DATE}.tar")
+            fi
+            if [ -n "$picoclaw_backup" ] && [ -f "$picoclaw_backup" ]; then
+                if [ "$DRY_RUN" = true ]; then
+                    echo "  [DRY RUN] Would restore picoclaw data"
+                else
+                    rm -rf data/picoclaw
+                    mkdir -p data
+                    tar xf "$picoclaw_backup" -C data
+                fi
+                rm -f "$picoclaw_backup"
             else
                 echo -e "⚠️  No backup found for service: $service"
             fi

@@ -469,13 +469,11 @@ services:
           cpus: '${SEARXNG_CPU_RESERVATION:-0.1}'
           memory: ${SEARXNG_MEMORY_RESERVATION:-128M}
 
-  # PicoClaw Gateway (optional profile)
+  # PicoClaw Gateway
   picoclaw-gateway:
     image: docker.io/sipeed/picoclaw:latest
     container_name: picoclaw-gateway
     restart: on-failure
-    profiles:
-      - gateway
     security_opt:
       - no-new-privileges:true
     volumes:
