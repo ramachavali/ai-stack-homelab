@@ -68,6 +68,39 @@ check_prerequisites() {
     echo ""
 }
 
+check_coreservices_available() {
+    print_section "🔗 Checking Core Services Dependency"
+
+    local core_root="${PROJECT_ROOT}/../coreservices-homelab"
+    local core_ca_bundle="${core_root}/pki/client/ca_bundle.crt"
+    local running_core_count=""
+
+    if [ ! -d "$core_root" ]; then
+        echo -e "❌ Core services folder not found: $core_root"
+        echo "Clone/place coreservices-homelab next to ai-stack-homelab and retry"
+        exit 1
+    fi
+
+    running_core_count="$(cd "$core_root" && docker-compose ps --services --filter status=running | wc -l | tr -d ' ')"
+
+    if [ "$running_core_count" -lt 1 ]; then
+        echo -e "❌ No running core services containers found"
+        echo "Start core services first: cd ../coreservices-homelab && ./scripts/start.sh"
+        exit 1
+    fi
+    echo -e "✅ Core services are running (${running_core_count} container(s))"
+
+    if [ ! -s "$core_ca_bundle" ]; then
+        echo -e "❌ Core root CA bundle not found or empty: $core_ca_bundle"
+        echo "Generate PKI first in core services, then re-run setup"
+        exit 1
+    fi
+    echo -e "✅ Core CA bundle is available: $core_ca_bundle"
+
+    echo -e "✅ Core services workspace is available"
+    echo ""
+}
+
 render_env() {
         local filePath="${1:-.env}"
 
@@ -154,23 +187,34 @@ ensure_url_safe_secret() {
 setup_tls_certificates() {
     print_section "🔐 Setting Up TLS Certificates"
 
+    local ai_pki_script="${PROJECT_ROOT}/scripts/pki-build.sh"
+    local ai_pki_dir="${PROJECT_ROOT}/pki"
     local core_root="${PROJECT_ROOT}/../coreservices-homelab"
-    local pki_script="${core_root}/scripts/pki-build.sh"
-    local pki_dir="${core_root}/pki"
+    local core_ca_dir="${core_root}/pki/ca"
+    local core_root_key="${core_ca_dir}/rootCA.key"
+    local core_root_crt="${core_ca_dir}/rootCA.crt"
 
-    if [ ! -x "$pki_script" ]; then
-        echo -e "⚠️ Core PKI script not found at: $pki_script"
-        echo -e "⚠️ Skipping cert generation (Traefik may serve default/self cert)"
+    if [ ! -x "$ai_pki_script" ]; then
+        echo -e "❌ AI PKI script not found at: $ai_pki_script"
+        echo -e "❌ Cannot generate TLS certificates"
         echo ""
         return
     fi
 
+    mkdir -p "${ai_pki_dir}/ca"
+
+    if [ -f "$core_root_key" ] && [ -f "$core_root_crt" ]; then
+        cp "$core_root_key" "${ai_pki_dir}/ca/rootCA.key"
+        cp "$core_root_crt" "${ai_pki_dir}/ca/rootCA.crt"
+        chmod 600 "${ai_pki_dir}/ca/rootCA.key"
+        chmod 644 "${ai_pki_dir}/ca/rootCA.crt"
+        echo -e "✅ Reusing core CA from: $core_ca_dir"
+    else
+        echo -e "⚠️ Core CA not found at: $core_ca_dir"
+        echo -e "⚠️ Generating local AI stack CA (not shared with core services)"
+    fi
+
     local sans=(
-        "traefik.local"
-        "auth.local"
-        "grafana.local"
-        "core.local"
-        "vault.local"
         "open-webui.local"
         "n8n.local"
         "litellm.local"
@@ -182,7 +226,7 @@ setup_tls_certificates() {
     )
 
     local pki_args=(
-        --out-dir "$pki_dir"
+        --out-dir "$ai_pki_dir"
         --ca-name "Foolsbook Local Root CA"
         --hostname "traefik.local"
     )
@@ -190,12 +234,12 @@ setup_tls_certificates() {
         pki_args+=(--san "$san")
     done
 
-    "$pki_script" "${pki_args[@]}"
+    "$ai_pki_script" "${pki_args[@]}"
 
     docker volume create traefik_certs > /dev/null
     docker run --rm \
         -v traefik_certs:/certs \
-        -v "$pki_dir/traefik:/src:ro" \
+        -v "$ai_pki_dir/traefik:/src:ro" \
         alpine:3.20 \
         sh -ec '
           cp /src/cert.pem /certs/cert.pem
@@ -205,7 +249,7 @@ setup_tls_certificates() {
         '
 
     echo -e "✅ TLS cert installed into traefik_certs volume"
-    echo -e "✅ CA bundle available at: ${pki_dir}/client/ca_bundle.crt"
+    echo -e "✅ CA bundle available at: ${ai_pki_dir}/client/ca_bundle.crt"
     echo ""
 }
 
@@ -408,20 +452,13 @@ show_completion() {
     print_section "🎉 Setup Completed Successfully!"
 
     echo "Run ./scripts/start.sh to launch services."
-    echo "Endpoints:"
-    echo "  https://open-webui.local"
-    echo "  https://n8n.local"
-    echo "  https://litellm.local"
-    echo "  https://ollama.local"
-    echo "  https://mcpo.local"
-    echo "  https://searxng.local"
-    echo "  https://portal.local"
-    echo "  https://picoclaw.local/health"
+
 }
 
 # Main execution
 main() {
     check_prerequisites
+    check_coreservices_available
     setup_environment
     setup_tls_certificates
     create_directories
