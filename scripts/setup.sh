@@ -102,6 +102,55 @@ render_env() {
         done < "$filePath"
 }
 
+is_url_safe_secret() {
+    local value="$1"
+    [[ "$value" =~ ^[A-Za-z0-9._~-]+$ ]]
+}
+
+upsert_env_var() {
+    local file_path="$1"
+    local var_name="$2"
+    local var_value="$3"
+
+    if [ ! -f "$file_path" ]; then
+        return
+    fi
+
+    local tmp_file="${file_path}.tmp"
+    awk -v key="$var_name" -v value="$var_value" '
+        BEGIN { updated=0 }
+        $0 ~ ("^" key "=") {
+            print key "=\"" value "\""
+            updated=1
+            next
+        }
+        { print }
+        END {
+            if (!updated) {
+                print key "=\"" value "\""
+            }
+        }
+    ' "$file_path" > "$tmp_file"
+    mv "$tmp_file" "$file_path"
+}
+
+ensure_url_safe_secret() {
+    local var_name="$1"
+    local hex_bytes="$2"
+    local current_value="${!var_name:-}"
+
+    if [ -z "$current_value" ] || ! is_url_safe_secret "$current_value"; then
+        local new_value
+        new_value="$(openssl rand -hex "$hex_bytes")"
+
+        export "${var_name}=${new_value}"
+        upsert_env_var "${PROJECT_ROOT}/.env" "$var_name" "$new_value"
+        upsert_env_var "${PROJECT_ROOT}/.rendered.env" "$var_name" "$new_value"
+
+        echo -e "⚠️ ${var_name} was empty or URL-unsafe and has been rotated"
+    fi
+}
+
 setup_tls_certificates() {
     print_section "🔐 Setting Up TLS Certificates"
 
@@ -176,6 +225,9 @@ setup_environment() {
     fi
 
     source "${PROJECT_ROOT}/.rendered.env" > /dev/null
+
+    ensure_url_safe_secret "POSTGRES_PASSWORD" 24
+    ensure_url_safe_secret "REDIS_PASSWORD" 24
     
     echo -e "✅ Environment variables loaded"
 }
