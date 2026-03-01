@@ -73,6 +73,7 @@ check_coreservices_available() {
 
     local core_root="${PROJECT_ROOT}/../coreservices-homelab"
     local core_ca_bundle="${core_root}/pki/client/ca_bundle.crt"
+    local core_certs_dir="${core_root}/pki/certs"
     local running_core_count=""
 
     if [ ! -d "$core_root" ]; then
@@ -96,6 +97,13 @@ check_coreservices_available() {
         exit 1
     fi
     echo -e "✅ Core CA bundle is available: $core_ca_bundle"
+
+    if [ ! -f "$core_certs_dir/cert.pem" ] || [ ! -f "$core_certs_dir/key.pem" ]; then
+        echo -e "❌ Core shared TLS certs missing under: $core_certs_dir"
+        echo "Run core setup first to generate shared certs"
+        exit 1
+    fi
+    echo -e "✅ Core shared TLS certs are available: $core_certs_dir"
 
     echo -e "✅ Core services workspace is available"
     echo ""
@@ -187,69 +195,28 @@ ensure_url_safe_secret() {
 setup_tls_certificates() {
     print_section "🔐 Setting Up TLS Certificates"
 
-    local ai_pki_script="${PROJECT_ROOT}/scripts/pki-build.sh"
-    local ai_pki_dir="${PROJECT_ROOT}/pki"
     local core_root="${PROJECT_ROOT}/../coreservices-homelab"
-    local core_ca_dir="${core_root}/pki/ca"
-    local core_root_key="${core_ca_dir}/rootCA.key"
-    local core_root_crt="${core_ca_dir}/rootCA.crt"
+    local core_certs_dir="${core_root}/pki/certs"
+    local core_ca_bundle="${core_root}/pki/client/ca_bundle.crt"
 
-    if [ ! -x "$ai_pki_script" ]; then
-        echo -e "❌ AI PKI script not found at: $ai_pki_script"
-        echo -e "❌ Cannot generate TLS certificates"
+    if [ ! -f "$core_certs_dir/cert.pem" ] || [ ! -f "$core_certs_dir/key.pem" ]; then
+        echo -e "❌ Core shared TLS certs not found under: $core_certs_dir"
+        echo -e "Run core setup first: cd ../coreservices-homelab && ./scripts/setup.sh"
         echo ""
         return
     fi
 
-    mkdir -p "${ai_pki_dir}/ca"
-
-    if [ -f "$core_root_key" ] && [ -f "$core_root_crt" ]; then
-        cp "$core_root_key" "${ai_pki_dir}/ca/rootCA.key"
-        cp "$core_root_crt" "${ai_pki_dir}/ca/rootCA.crt"
-        chmod 600 "${ai_pki_dir}/ca/rootCA.key"
-        chmod 644 "${ai_pki_dir}/ca/rootCA.crt"
-        echo -e "✅ Reusing core CA from: $core_ca_dir"
-    else
-        echo -e "⚠️ Core CA not found at: $core_ca_dir"
-        echo -e "⚠️ Generating local AI stack CA (not shared with core services)"
-    fi
-
-    local sans=(
-        "open-webui.local"
-        "n8n.local"
-        "litellm.local"
-        "ollama.local"
-        "mcpo.local"
-        "searxng.local"
-        "portal.local"
-        "picoclaw.local"
-    )
-
-    local pki_args=(
-        --out-dir "$ai_pki_dir"
-        --ca-name "Foolsbook Local Root CA"
-        --hostname "traefik.local"
-    )
-    for san in "${sans[@]}"; do
-        pki_args+=(--san "$san")
-    done
-
-    "$ai_pki_script" "${pki_args[@]}"
-
     docker volume create traefik_certs > /dev/null
-    docker run --rm \
-        -v traefik_certs:/certs \
-        -v "$ai_pki_dir/traefik:/src:ro" \
-        alpine:3.20 \
-        sh -ec '
-          cp /src/cert.pem /certs/cert.pem
-          cp /src/key.pem /certs/key.pem
-          chmod 644 /certs/cert.pem
-          chmod 600 /certs/key.pem
-        '
 
-    echo -e "✅ TLS cert installed into traefik_certs volume"
-    echo -e "✅ CA bundle available at: ${ai_pki_dir}/client/ca_bundle.crt"
+    local sync_container
+    sync_container="$(docker create -v traefik_certs:/certs alpine:3.20 sh -ec 'chmod 644 /certs/cert.pem && chmod 600 /certs/key.pem')"
+    docker cp "$core_certs_dir/cert.pem" "${sync_container}:/certs/cert.pem"
+    docker cp "$core_certs_dir/key.pem" "${sync_container}:/certs/key.pem"
+    docker start "$sync_container" > /dev/null
+    docker rm "$sync_container" > /dev/null
+
+    echo -e "✅ Shared TLS cert installed into traefik_certs volume"
+    echo -e "✅ CA bundle available at: ${core_ca_bundle}"
     echo ""
 }
 

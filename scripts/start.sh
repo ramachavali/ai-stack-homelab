@@ -34,6 +34,27 @@ print_error() {
     echo -e "❌ $1"
 }
 
+check_core_services_runtime() {
+    local core_root="${PROJECT_ROOT}/../coreservices-homelab"
+    local running_core_count="0"
+
+    if [ ! -d "$core_root" ]; then
+        print_error "Core services folder not found: $core_root"
+        echo "  Clone/place coreservices-homelab next to ai-stack-homelab"
+        return 1
+    fi
+
+    running_core_count="$(cd "$core_root" && docker-compose ps --services --filter status=running | wc -l | tr -d ' ')"
+    if [ "$running_core_count" -lt 1 ]; then
+        print_error "Core services are not running"
+        echo "  Start core services first: cd ../coreservices-homelab && ./scripts/start.sh"
+        return 1
+    fi
+
+    print_success "Core services are running (${running_core_count} container(s))"
+    return 0
+}
+
 wait_for_service() {
     local service="$1"
     local timeout="${2:-120}"
@@ -89,6 +110,10 @@ if ! docker network inspect core-network > /dev/null 2>&1; then
     exit 1
 fi
 print_success "External network 'core-network' is available"
+
+if ! check_core_services_runtime; then
+    exit 1
+fi
 
 if [ -f ./.rendered.env ]; then
     source ./.rendered.env

@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 set -o errexit
 set -o nounset
-
-set -x
 set -euo pipefail
 
 usage() {
@@ -25,6 +23,8 @@ Examples:
 Outputs:
   <out-dir>/ca/rootCA.key
   <out-dir>/ca/rootCA.crt
+  <out-dir>/certs/key.pem
+  <out-dir>/certs/cert.pem
   <out-dir>/nginx/<hostname>/privkey.pem
   <out-dir>/nginx/<hostname>/cert.pem
   <out-dir>/nginx/<hostname>/fullchain.pem
@@ -62,9 +62,10 @@ found=0
 for s in "${SANS[@]:-}"; do [[ "$s" == "$HOSTNAME" ]] && found=1; done
 [[ "${#SANS[@]}" -eq 0 || "$found" -eq 0 ]] && SANS+=("$HOSTNAME")
 
-mkdir -p "$OUT_DIR"/{ca,nginx,client,tmp}
+mkdir -p "$OUT_DIR"/{ca,certs,nginx,client,tmp}
 NGINX_DIR="$OUT_DIR/nginx/$HOSTNAME"
 mkdir -p "$NGINX_DIR"
+CERTS_DIR="$OUT_DIR/certs"
 
 ROOT_KEY="$OUT_DIR/ca/rootCA.key"
 ROOT_CRT="$OUT_DIR/ca/rootCA.crt"
@@ -132,16 +133,25 @@ openssl req -new -key "$LEAF_KEY" -out "$CSR" -config "$CONF"
 
 # 3) Sign leaf
 V3="$OUT_DIR/tmp/v3-server.ext"
-cat > "$V3" <<'EOF'
+{
+  cat <<'EOF'
 basicConstraints = CA:FALSE
 keyUsage = digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer
+subjectAltName = @alt_names
+
+[alt_names]
 EOF
+  i=1
+  for d in "${SANS[@]}"; do
+    echo "DNS.${i} = ${d}"
+    i=$((i+1))
+  done
+} > "$V3"
 
 echo "[+] Signing leaf certificate ($DAYS_LEAF days)"
-# -copy_extensions copy preserves SANs from CSR
 openssl x509 -req \
   -in "$CSR" \
   -CA "$ROOT_CRT" \
@@ -149,8 +159,7 @@ openssl x509 -req \
   -CAcreateserial \
   -out "$LEAF_CRT" \
   -days "$DAYS_LEAF" -sha256 \
-  -extfile "$V3" \
-#  -copy_extensions copy
+  -extfile "$V3"
 
 chmod 644 "$LEAF_CRT"
 
@@ -158,7 +167,13 @@ chmod 644 "$LEAF_CRT"
 cat "$LEAF_CRT" "$ROOT_CRT" > "$FULLCHAIN"
 chmod 644 "$FULLCHAIN"
 
-# 5) Client CA bundle
+# 5) Canonical cert/key output
+cp "$LEAF_KEY" "$CERTS_DIR/key.pem"
+cp "$FULLCHAIN" "$CERTS_DIR/cert.pem"
+chmod 600 "$CERTS_DIR/key.pem"
+chmod 644 "$CERTS_DIR/cert.pem"
+
+# 6) Client CA bundle
 cp "$ROOT_CRT" "$CLIENT_BUNDLE"
 chmod 644 "$CLIENT_BUNDLE"
 
@@ -170,6 +185,9 @@ echo "Leaf (nginx) for $HOSTNAME:"
 echo "  $LEAF_KEY"
 echo "  $LEAF_CRT"
 echo "  $FULLCHAIN"
+echo "Canonical cert/key:"
+echo "  $CERTS_DIR/key.pem"
+echo "  $CERTS_DIR/cert.pem"
 echo "Client CA bundle (install on laptop):"
 echo "  $CLIENT_BUNDLE"
 echo
