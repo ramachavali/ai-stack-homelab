@@ -123,7 +123,7 @@ else
 fi
 
 print_step "🔍 Validating Configuration"
-required_vars=("POSTGRES_PASSWORD" "REDIS_PASSWORD" "N8N_ENCRYPTION_KEY" "OPEN_WEBUI_SECRET_KEY")
+required_vars=("POSTGRES_PASSWORD" "REDIS_PASSWORD" "N8N_ENCRYPTION_KEY" "OPEN_WEBUI_SECRET_KEY" "PICOCLAW_PICO_TOKEN")
 missing_vars=()
 
 for var in "${required_vars[@]}"; do

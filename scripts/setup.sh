@@ -220,6 +220,52 @@ setup_tls_certificates() {
     echo ""
 }
 
+setup_picoclaw_config() {
+        print_section "🦞 Setting Up PicoClaw Configuration"
+
+        local picoclaw_provider="${PICOCLAW_PROVIDER:-ollama}"
+        local picoclaw_model_name="${PICOCLAW_MODEL:-ollama-local}"
+        local picoclaw_api_key="${PICOCLAW_OLLAMA_API_KEY:-ollama-local}"
+        local picoclaw_api_base="${PICOCLAW_OLLAMA_API_BASE:-http://ollama:11434/v1}"
+
+        docker volume create picoclaw_data > /dev/null
+        docker run --rm \
+                -v picoclaw_data:/data \
+                alpine:3.20 \
+                sh -ec "
+                    mkdir -p /data/workspace
+                    cat > /data/config.json <<'EOF'
+{
+    \"agents\": {
+        \"defaults\": {
+            \"workspace\": \"~/.picoclaw/workspace\",
+            \"restrict_to_workspace\": true,
+            \"provider\": \"${picoclaw_provider}\",
+            \"model\": \"${picoclaw_model_name}\",
+            \"max_tokens\": 32768,
+            \"max_tool_iterations\": 50
+        }
+    },
+    \"model_list\": [
+        {
+            \"model_name\": \"${picoclaw_model_name}\",
+            \"model\": \"${picoclaw_provider}/${picoclaw_model_name}\",
+            \"api_base\": \"${picoclaw_api_base}\",
+            \"api_key\": \"${picoclaw_api_key}\"
+        }
+    ],
+    \"gateway\": {
+        \"host\": \"0.0.0.0\",
+        \"port\": 18790
+    }
+}
+EOF
+                "
+
+        echo -e "✅ PicoClaw config initialized in picoclaw_data volume"
+        echo ""
+}
+
 # Function to create environment file
 setup_environment() {
     print_section "⚙️ Setting Up Environment"
@@ -239,6 +285,7 @@ setup_environment() {
 
     ensure_url_safe_secret "POSTGRES_PASSWORD" 24
     ensure_url_safe_secret "REDIS_PASSWORD" 24
+    ensure_url_safe_secret "PICOCLAW_PICO_TOKEN" 24
     
     echo -e "✅ Environment variables loaded"
 }
@@ -428,6 +475,7 @@ main() {
     check_coreservices_available
     setup_environment
     setup_tls_certificates
+    setup_picoclaw_config
     create_directories
     create_configs
     pull_images

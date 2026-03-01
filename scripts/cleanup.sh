@@ -64,8 +64,9 @@ echo "Removing env files..."
 safe_remove "./.env" "remove .env file"
 safe_remove "./.rendered.env" "remove .env file"
 
-echo "Removing docker volumes..."
-for volume in postgres_data redis_data ollama_data n8n_data open_webui_data litellm_data mcp_data searxng_data; do
+remove_docker_volume() {
+    local volume="${1}"
+
     if docker volume inspect "$volume" >/dev/null 2>&1; then
         if docker volume rm "$volume" >/dev/null 2>&1; then
             echo -e "  ✅ Removed volume: $volume"
@@ -75,7 +76,21 @@ for volume in postgres_data redis_data ollama_data n8n_data open_webui_data lite
     else
         echo -e "  ℹ️  Volume not found: $volume"
     fi
-done
+}
+
+echo "Removing docker volumes..."
+mapfile -t compose_volumes < <(docker-compose config --volumes 2>/dev/null | sed '/^$/d' | sort -u)
+
+if [ "${#compose_volumes[@]}" -gt 0 ]; then
+    for volume in "${compose_volumes[@]}"; do
+        remove_docker_volume "$volume"
+    done
+else
+    echo -e "  ⚠️  Could not resolve compose volumes; using fallback volume list"
+    for volume in postgres_data redis_data ollama_data n8n_data open_webui_data litellm_data mcp_data searxng_data picoclaw_data; do
+        remove_docker_volume "$volume"
+    done
+fi
 
 echo "Pruning images..."
 docker image prune -f 2>/dev/null || true

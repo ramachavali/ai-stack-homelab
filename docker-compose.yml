@@ -266,7 +266,6 @@ services:
       STORE_MODEL_IN_DB: "True"
     volumes:
       - litellm_data:/app/proxy_server_config
-      - ./scripts/healthcheck_litellm.py:/opt/healthcheck_litellm.py:ro
     networks:
       - ai-stack
       - core-network
@@ -280,7 +279,7 @@ services:
       # - "traefik.http.routers.litellm.service=litellm"
       - "traefik.http.services.litellm.loadbalancer.server.port=4000"
     healthcheck:
-      test: ["CMD-SHELL", "python /opt/healthcheck_litellm.py --url http://127.0.0.1:4000/health/liveliness --timeout 5 --ok-range 200:499"]
+      test: ["CMD-SHELL", "python -c 'import urllib.request,sys;\ntry:\n urllib.request.urlopen(\"http://127.0.0.1:4000/health/liveliness\", timeout=5); sys.exit(0)\nexcept Exception:\n sys.exit(1)'"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -368,6 +367,13 @@ services:
       - "traefik.http.routers.mcpo.rule=Host(`mcpo.local`)"
       - "traefik.http.routers.mcpo.entrypoints=websecure"
       - "traefik.http.routers.mcpo.tls=true"
+      - "traefik.http.routers.mcpo-health.rule=Host(`mcpo.local`) && Path(`/health`)"
+      - "traefik.http.routers.mcpo-health.entrypoints=websecure"
+      - "traefik.http.routers.mcpo-health.tls=true"
+      - "traefik.http.routers.mcpo-health.priority=100"
+      - "traefik.http.routers.mcpo-health.service=mcpo"
+      - "traefik.http.routers.mcpo-health.middlewares=mcpo-health-rewrite@docker"
+      - "traefik.http.middlewares.mcpo-health-rewrite.replacepath.path=/docs"
       # Optional: router.service auto-resolves for single-service containers
       # - "traefik.http.routers.mcpo.service=mcpo"
       - "traefik.http.services.mcpo.loadbalancer.server.port=8000"
@@ -476,6 +482,11 @@ services:
     restart: on-failure
     security_opt:
       - no-new-privileges:true
+    environment:
+      PICOCLAW_GATEWAY_HOST: ${PICOCLAW_GATEWAY_HOST:-0.0.0.0}
+      PICOCLAW_GATEWAY_PORT: ${PICOCLAW_GATEWAY_PORT:-18790}
+      PICOCLAW_CHANNELS_PICO_ENABLED: ${PICOCLAW_CHANNELS_PICO_ENABLED:-true}
+      PICOCLAW_CHANNELS_PICO_TOKEN: ${PICOCLAW_PICO_TOKEN}
     volumes:
       - picoclaw_data:/root/.picoclaw
     networks:
@@ -488,6 +499,12 @@ services:
       - "traefik.http.routers.picoclaw.entrypoints=websecure"
       - "traefik.http.routers.picoclaw.tls=true"
       - "traefik.http.services.picoclaw.loadbalancer.server.port=18790"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:18790/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 networks:
   ai-stack:
