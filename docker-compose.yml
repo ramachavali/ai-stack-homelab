@@ -489,6 +489,7 @@ services:
       PICOCLAW_CHANNELS_PICO_TOKEN: ${PICOCLAW_PICO_TOKEN}
     volumes:
       - picoclaw_data:/root/.picoclaw
+      - ./configs/picoclaw/claw.config:/root/.picoclaw/config.json:ro
     networks:
       - ai-stack
       - core-network
