@@ -79,7 +79,10 @@ remove_docker_volume() {
 }
 
 echo "Removing docker volumes..."
-mapfile -t compose_volumes < <(docker-compose config --volumes 2>/dev/null | sed '/^$/d' | sort -u)
+compose_volumes=()
+while IFS= read -r volume; do
+    compose_volumes+=("$volume")
+done < <(docker-compose config --volumes 2>/dev/null | sed '/^$/d' | sort -u)
 
 if [ "${#compose_volumes[@]}" -gt 0 ]; then
     for volume in "${compose_volumes[@]}"; do

@@ -142,8 +142,8 @@ services:
       NODE_OPTIONS: "--max-old-space-size=${N8N_MAX_MEMORY:-2048}"
     volumes:
       - n8n_data:/home/node/.n8n
-      - ${HOST_DROPZONE_PATH}:/home/node/dropzone:rw
-      - ${HOST_DOCSTORE_PATH}:/home/node/docstore:rw
+      #- ${HOST_DROPZONE_PATH}:/mnt/host/dropzone:rw
+      #- ${HOST_DOCSTORE_PATH}:/mnt/host/docstore:rw
     networks:
       - ai-stack
       - core-network
@@ -206,10 +206,10 @@ services:
       CHUNK_OVERLAP: ${CHUNK_OVERLAP:-200}
     volumes:
       - open_webui_data:/app/backend/data
-      - ${HOST_DOWNLOADS_PATH}:/mnt/host/downloads:rw
-      - ${HOST_NETWORK_PATH}:/mnt/host/${USERNAME}-network:rw
-      - ${HOST_DROPZONE_PATH}:/mnt/host/dropzone:rw
-      - ${HOST_DOCSTORE_PATH}:/mnt/host/docstore:rw
+      #- ${HOST_DOWNLOADS_PATH}:/mnt/host/downloads:rw
+      #- ${HOST_NETWORK_PATH}:/mnt/host/${USERNAME}-network:rw
+      #- ${HOST_DROPZONE_PATH}:/mnt/host/dropzone:rw
+      #- ${HOST_DOCSTORE_PATH}:/mnt/host/docstore:rw
     networks:
       - ai-stack
       - core-network
@@ -489,7 +489,7 @@ services:
       PICOCLAW_CHANNELS_PICO_TOKEN: ${PICOCLAW_PICO_TOKEN}
     volumes:
       - picoclaw_data:/root/.picoclaw
-      - ./configs/picoclaw/claw.config:/root/.picoclaw/config.json:ro
+      - ./configs/picoclaw/config.json:/root/.picoclaw/config.json:ro
     networks:
       - ai-stack
       - core-network

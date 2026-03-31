@@ -232,36 +232,33 @@ setup_picoclaw_config() {
         docker run --rm \
                 -v picoclaw_data:/data \
                 alpine:3.20 \
-                sh -ec "
-                    mkdir -p /data/workspace
-                    cat > /data/config.json <<'EOF'
-{
-    \"agents\": {
-        \"defaults\": {
-            \"workspace\": \"~/.picoclaw/workspace\",
-            \"restrict_to_workspace\": true,
-            \"provider\": \"${picoclaw_provider}\",
-            \"model\": \"${picoclaw_model_name}\",
-            \"max_tokens\": 32768,
-            \"max_tool_iterations\": 50
-        }
-    },
-    \"model_list\": [
-        {
-            \"model_name\": \"${picoclaw_model_name}\",
-            \"model\": \"${picoclaw_provider}/${picoclaw_model_name}\",
-            \"api_base\": \"${picoclaw_api_base}\",
-            \"api_key\": \"${picoclaw_api_key}\"
-        }
-    ],
-    \"gateway\": {
-        \"host\": \"0.0.0.0\",
-        \"port\": 18790
-    }
-}
-EOF
-                "
-
+                sh -ec "mkdir -p /data/workspace"
+#                    cat >> /data/config.json <<'EOF'
+#{
+#    \"agents\": {
+#        \"defaults\": {
+#            \"workspace\": \"~/.picoclaw/workspace\",
+#            \"restrict_to_workspace\": true,
+#            \"provider\": \"${picoclaw_provider}\",
+#            \"model\": \"${picoclaw_model_name}\",
+#            \"max_tokens\": 32768,
+#            \"max_tool_iterations\": 50
+#        }
+#    },
+#    \"model_list\": [
+#        {
+#            \"model_name\": \"${picoclaw_model_name}\",
+#            \"model\": \"${picoclaw_provider}/${picoclaw_model_name}\",
+#            \"api_base\": \"${picoclaw_api_base}\",
+#            \"api_key\": \"${picoclaw_api_key}\"
+#        }
+#    ],
+#    \"gateway\": {
+#        \"host\": \"0.0.0.0\",
+#        \"port\": 18790
+#    }
+#}
+#EOF
         echo -e "✅ PicoClaw config initialized in picoclaw_data volume"
         echo ""
 }
